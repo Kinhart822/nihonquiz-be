@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: MoriPract-main-${NODE_ENV}-postgres
+    image: postgres:15.3-alpine3.18
+    command: -p ${DB_PORT}
+    ports:
+      - '${DB_PORT}:${DB_PORT}'
+    volumes:
+      - MoriPractPostgresData:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE} -p ${DB_PORT}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - MoriPractNetwork
+
+  redis:
+    image: redis:7-alpine
+    container_name: MoriPractRedis
+    restart: always
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - MoriPractRedisData:/data
+    networks:
+      - MoriPractNetwork
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: moripract-main:${IMAGE_TAG}
+    container_name: MoriPract-main-${NODE_ENV}-api
+    ports:
+      - '${PORT}:3000'
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - MoriPractNetwork
+
+  bull_monitor:
+    container_name: MoriPract-main-${NODE_ENV}-bull_monitor
+    image: hocptit/bull_ui:0.0.2
+    ports:
+      - '${BULL_MONITOR_PORT}:3011'
+    environment:
+      REDIS_URI: redis://MoriPractRedis:6379
+      USERNAME: ${BULL_MONITOR_USERNAME}
+      PASSWORD: ${BULL_MONITOR_PASSWORD}
+      QUEUES: MAIL_QUEUE
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - MoriPractNetwork
+
+volumes:
+  MoriPractPostgresData:
+  MoriPractRedisData:
+
+networks:
+  MoriPractNetwork:
+    name: MoriPractNetwork
+    driver: bridge
+    attachable: true
