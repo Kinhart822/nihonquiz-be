@@ -1,6 +1,6 @@
 import { EnvKey } from '@constants/env.constant';
 import { IMailType } from '@constants/mail.constant';
-import { UserStatus } from '@constants/user.constant';
+import { AccessMethod, UserStatus } from '@constants/user.constant';
 import { UserRepository } from '@database/repository/user.repository';
 import { MailService } from '@modules/mail/mail.service';
 import { RedisService } from '@modules/redis/redis.service';
@@ -183,6 +183,7 @@ describe('AuthService', () => {
       userRepository.findOneBy.mockResolvedValue({
         email: dto.email,
         password: 'hashed',
+        accessMethod: AccessMethod.EMAIL,
       } as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
@@ -198,6 +199,7 @@ describe('AuthService', () => {
         email: dto.email,
         password: 'hashed',
         status: UserStatus.ACTIVE,
+        accessMethod: AccessMethod.EMAIL,
       };
       userRepository.findOneBy.mockResolvedValue(user as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);

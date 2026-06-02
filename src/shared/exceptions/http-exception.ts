@@ -140,6 +140,11 @@ export const httpErrors = {
     message: 'Invalid email or password.',
     code: 'INVALID_CREDENTIALS',
   },
+  INVALID_LOGIN_METHOD: {
+    message:
+      'This account was registered via another method. Please use the correct login method.',
+    code: 'INVALID_LOGIN_METHOD',
+  },
   ALREADY_VERIFIED: {
     message: 'User is already verified.',
     code: 'ALREADY_VERIFIED',

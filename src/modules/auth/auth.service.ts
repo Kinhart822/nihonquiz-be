@@ -277,6 +277,13 @@ export class AuthService {
       );
     }
 
+    if (user!.accessMethod !== AccessMethod.EMAIL) {
+      httpBadRequest(
+        httpErrors.INVALID_LOGIN_METHOD.message,
+        httpErrors.INVALID_LOGIN_METHOD.code,
+      );
+    }
+
     const isMatch = await this.comparePassword(dto.password, user!.password!);
     if (!isMatch) {
       httpBadRequest(
