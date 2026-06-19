@@ -19,7 +19,7 @@ import {
 import { AuthUser } from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { UpdateProfileDto } from './dto/user.req.dto';
-import { UserProfileResDto } from './dto/user.res.dto';
+import { UserResDto } from './dto/user.res.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User')
@@ -33,12 +33,10 @@ export class UserController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: UserProfileResDto,
+    type: UserResDto,
     description: 'Profile returned successfully',
   })
-  async getProfile(
-    @AuthUser() user: JwtPayloadDto,
-  ): Promise<UserProfileResDto> {
+  async getProfile(@AuthUser() user: JwtPayloadDto): Promise<UserResDto> {
     return this.userService.getProfile(user.id);
   }
 

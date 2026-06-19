@@ -61,7 +61,7 @@ export class MailService {
     const count = (await this.redisService.get<number>(resendKey)) || 0;
 
     if (count >= 3) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.TOO_MANY_RESENDS.message,
         httpErrors.TOO_MANY_RESENDS.code,
       );

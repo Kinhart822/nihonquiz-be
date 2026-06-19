@@ -1,4 +1,5 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { ParticipantEntity } from './participant.entity';
 import {
   AccessMethod,
   RoleUser,
@@ -47,4 +48,7 @@ export class UserEntity extends BaseEntity {
     default: RoleUser.STUDENT,
   })
   role!: RoleUser;
+
+  @OneToMany(() => ParticipantEntity, (participant) => participant.user)
+  participants!: ParticipantEntity[];
 }

@@ -1,5 +1,5 @@
-import { RedisClientType, createClient } from 'redis';
 import { parseDuration } from '@utils/util';
+import { RedisClientType, createClient } from 'redis';
 import { IMailType } from './mail.constant';
 
 export function createClientRedis(): RedisClientType {
@@ -27,3 +27,12 @@ export const getRegisterDataKey = (mail: string) => `register:data:${mail}`;
 
 export const getRedisOtpResendCountKey = (mail: string, type: IMailType) =>
   `mail:resend-count:${type}:${mail}`;
+
+// Redis key conversation logic
+export const getJoinRequestKey = (requestKey: string) =>
+  `join-request:${requestKey}`;
+
+export const getUserConversationJoinRequestKey = (
+  userId: number,
+  conversationId: number,
+) => `join-request:user:${userId}:conversation:${conversationId}`;

@@ -18,6 +18,69 @@ export enum AccessMethod {
   GOOGLE = 'GOOGLE',
 }
 
+export enum MediaType {
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  FILE = 'FILE',
+  AUDIO = 'AUDIO',
+}
+
+export enum ConversationType {
+  DIRECT = 'DIRECT',
+  GROUP = 'GROUP',
+}
+
+export enum ConversationStatus {
+  ACTIVE = 'ACTIVE',
+  BLOCKED = 'BLOCKED',
+  DELETED = 'DELETED',
+}
+
+export enum ParticipantRole {
+  OWNER = 'OWNER',
+  MEMBER = 'MEMBER',
+}
+
+export enum ParticipantStatus {
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+  LEFT = 'LEFT',
+  KICKED = 'KICKED',
+  BLOCKED = 'BLOCKED',
+  DELETED = 'DELETED',
+}
+
+export enum JoinGroupRequestAction {
+  ACCEPT = 'ACCEPT',
+  REJECT = 'REJECT',
+}
+
+export enum MessageType {
+  TEXT = 'TEXT',
+  ATTACHMENT = 'ATTACHMENT',
+  SYSTEM = 'SYSTEM',
+}
+
+export enum MessageStatus {
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+}
+
+export enum MessageAttachmentType {
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  AUDIO = 'AUDIO',
+  FILE = 'FILE',
+}
+
+export enum MessageAttachmentStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING',
+  DELETED = 'DELETED',
+}
+
 export const REGISTER_RES = 'OTP for registration has been sent to your email.';
 export const FORGOT_PASSWORD_RES =
   'OTP for password reset has been sent to your email.';
@@ -37,3 +100,16 @@ export const VERIFY_ACCOUNT_RES = (type: IMailType) => {
     return 'Verification successful.';
   }
 };
+
+export const SYSTEM_CONFIG_KEYS = {
+  MAX_NON_FRIEND_MESSAGES: 'MAX_NON_FRIEND_MESSAGES',
+  MAX_FRIEND_REQUESTS_PER_DAY: 'MAX_FRIEND_REQUESTS_PER_DAY',
+};
+
+export enum AccountHistoryType {
+  REGISTER = 'REGISTER',
+  SIGN_IN = 'SIGN_IN',
+  BLOCKED = 'BLOCKED',
+  UNBLOCKED = 'UNBLOCKED',
+  DELETED = 'DELETED',
+}

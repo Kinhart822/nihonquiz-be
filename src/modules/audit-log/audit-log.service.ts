@@ -38,7 +38,7 @@ export class AuditLogService {
   async getAuditLogInfo(id: number): Promise<AuditLogResDto> {
     const log = await this.auditLogRepository.findOne({ where: { id } });
     if (!log) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.AUDIT_LOG_NOT_FOUND.message,
         httpErrors.AUDIT_LOG_NOT_FOUND.code,
       );

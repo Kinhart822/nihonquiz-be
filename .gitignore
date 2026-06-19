@@ -55,3 +55,8 @@ pids
 # Agent
 .agent
 .claude
+
+# Additional guidelines
+/api_documentation.md
+/dev-guide.md
+/test-guide.md

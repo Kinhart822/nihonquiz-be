@@ -1,8 +1,12 @@
-import { getUserRoomByEmail } from '@constants/socket.constant';
+import {
+  getConversationRoomById,
+  getUserRoomByEmail,
+} from '@constants/socket.constant';
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
@@ -50,7 +54,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new UnauthorizedException('Invalid token');
       }
       return jwtData;
-    } catch {
+    } catch (_error) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
@@ -78,9 +82,28 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('ping')
   handlePing(): string {
     return 'pong';
+  }
+
+  @SubscribeMessage('join_conversation')
+  handleJoinConversation(
+    client: Socket,
+    @MessageBody() conversationId: number,
+  ): void {
+    const room = getConversationRoomById(conversationId);
+    void client.join(room);
+    this.logger.log(`Client ${client.id} joined conversation room: ${room}`);
+  }
+
+  @SubscribeMessage('leave_conversation')
+  handleLeaveConversation(
+    client: Socket,
+    @MessageBody() conversationId: number,
+  ): void {
+    const room = getConversationRoomById(conversationId);
+    void client.leave(room);
+    this.logger.log(`Client ${client.id} left conversation room: ${room}`);
   }
 
   handleDisconnect(client: Socket) {

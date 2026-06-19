@@ -2,6 +2,7 @@ import { FILE_UPLOAD_JOB, FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
 import { UPDATE_PROFILE_RES } from '@constants/user.constant';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '@repositories/user.repository';
 import {
   httpBadRequest,
@@ -12,28 +13,26 @@ import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 import { Transactional } from 'typeorm-transactional';
 import { UpdateProfileDto } from './dto/user.req.dto';
-import { UserProfileResDto } from './dto/user.res.dto';
+import { UserResDto } from './dto/user.res.dto';
 
 @Injectable()
 export class UserService {
-  private readonly MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
-  private readonly MAX_BACKGROUND_SIZE = 10 * 1024 * 1024; // 10MB
-
   constructor(
     private readonly userRepository: UserRepository,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
+    private readonly configService: ConfigService,
   ) {}
 
   // ==================== GET PROFILE ====================
-  async getProfile(userId: number): Promise<UserProfileResDto> {
+  async getProfile(userId: number): Promise<UserResDto> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
     }
-    return plainToInstance(UserProfileResDto, user, {
+    return plainToInstance(UserResDto, user, {
       excludeExtraneousValues: true,
     });
   }
@@ -49,7 +48,7 @@ export class UserService {
     // Check user exists
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
@@ -61,7 +60,7 @@ export class UserService {
         username: payload.username,
       });
       if (existing) {
-        httpBadRequest(
+        throw new httpBadRequest(
           httpErrors.USERNAME_EXISTED.message,
           httpErrors.USERNAME_EXISTED.code,
         );
@@ -74,8 +73,11 @@ export class UserService {
     }
 
     if (avatarFile) {
-      if (avatarFile.size > this.MAX_AVATAR_SIZE) {
-        httpBadRequest(
+      const maxAvatarSize = Number(
+        this.configService.get<number>('MAX_AVATAR_SIZE', 5242880),
+      );
+      if (avatarFile.size > maxAvatarSize) {
+        throw new httpBadRequest(
           httpErrors.FILE_TOO_LARGE(avatarFile.originalname).message,
           httpErrors.FILE_TOO_LARGE(avatarFile.originalname).code,
         );
@@ -93,8 +95,11 @@ export class UserService {
     }
 
     if (backgroundFile) {
-      if (backgroundFile.size > this.MAX_BACKGROUND_SIZE) {
-        httpBadRequest(
+      const maxBackgroundSize = Number(
+        this.configService.get<number>('MAX_BACKGROUND_SIZE', 10485760),
+      );
+      if (backgroundFile.size > maxBackgroundSize) {
+        throw new httpBadRequest(
           httpErrors.FILE_TOO_LARGE(backgroundFile.originalname).message,
           httpErrors.FILE_TOO_LARGE(backgroundFile.originalname).code,
         );

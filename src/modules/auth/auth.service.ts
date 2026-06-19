@@ -113,7 +113,7 @@ export class AuthService {
     // Check account existed
     const account = await this.userRepository.findOneBy({ email });
     if (account) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.ACCOUNT_EXISTED.message,
         httpErrors.ACCOUNT_EXISTED.code,
       );
@@ -122,7 +122,7 @@ export class AuthService {
     // Check username existed
     const usernameExisted = await this.userRepository.findOneBy({ username });
     if (usernameExisted) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.USERNAME_EXISTED.message,
         httpErrors.USERNAME_EXISTED.code,
       );
@@ -134,7 +134,7 @@ export class AuthService {
       IMailType.SIGN_UP,
     );
     if (isOTPExist) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.OTP_ALREADY_SENT.message,
         httpErrors.OTP_ALREADY_SENT.code,
       );
@@ -163,14 +163,14 @@ export class AuthService {
   async forgotPassword(dto: EmailBodyReqDto): Promise<any> {
     const user = await this.userRepository.findOneBy({ email: dto.email });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
     }
 
     if (user!.status === UserStatus.BLOCKED) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.BLOCKED_USER.message,
         httpErrors.BLOCKED_USER.code,
       );
@@ -181,7 +181,7 @@ export class AuthService {
       IMailType.FORGOT_PASSWORD,
     );
     if (isOTPExist) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.OTP_ALREADY_SENT.message,
         httpErrors.OTP_ALREADY_SENT.code,
       );
@@ -205,7 +205,7 @@ export class AuthService {
       const registerData = await this.redisService.get(registerDataKey);
 
       if (!registerData) {
-        httpBadRequest(
+        throw new httpBadRequest(
           httpErrors.INVALID_REGISTER_OTP.message,
           httpErrors.INVALID_REGISTER_OTP.code,
         );
@@ -214,14 +214,14 @@ export class AuthService {
       const user = await this.userRepository.findOneBy({ email });
 
       if (!user) {
-        httpNotFound(
+        throw new httpNotFound(
           httpErrors.ACCOUNT_NOT_FOUND.message,
           httpErrors.ACCOUNT_NOT_FOUND.code,
         );
       }
 
       if (user!.status === UserStatus.BLOCKED) {
-        httpBadRequest(
+        throw new httpBadRequest(
           httpErrors.BLOCKED_USER.message,
           httpErrors.BLOCKED_USER.code,
         );
@@ -246,7 +246,7 @@ export class AuthService {
     );
 
     if (!isVerified) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.INVALID_OTP.message,
         httpErrors.INVALID_OTP.code,
       );
@@ -254,7 +254,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOneBy({ email });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
@@ -271,14 +271,14 @@ export class AuthService {
   async signIn(dto: LoginReqDto): Promise<LoginResDto> {
     const user = await this.userRepository.findOneBy({ email: dto.email });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
     }
 
     if (user!.accessMethod !== AccessMethod.EMAIL) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.INVALID_LOGIN_METHOD.message,
         httpErrors.INVALID_LOGIN_METHOD.code,
       );
@@ -286,7 +286,7 @@ export class AuthService {
 
     const isMatch = await this.comparePassword(dto.password, user!.password!);
     if (!isMatch) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.INVALID_CREDENTIALS.message,
         httpErrors.INVALID_CREDENTIALS.code,
       );
@@ -296,7 +296,7 @@ export class AuthService {
       user!.status = UserStatus.ACTIVE;
       await this.userRepository.update(user!.id, { status: UserStatus.ACTIVE });
     } else if (user!.status === UserStatus.BLOCKED) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.BLOCKED_USER.message,
         httpErrors.BLOCKED_USER.code,
       );
@@ -323,7 +323,7 @@ export class AuthService {
         if (user!.status === UserStatus.INACTIVE) {
           user!.status = UserStatus.ACTIVE;
         } else if (user!.status === UserStatus.BLOCKED) {
-          httpBadRequest(
+          throw new httpBadRequest(
             httpErrors.BLOCKED_USER.message,
             httpErrors.BLOCKED_USER.code,
           );
@@ -365,14 +365,14 @@ export class AuthService {
   async logout(userId: number): Promise<any> {
     const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );
     }
 
     if (user!.status === UserStatus.INACTIVE) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.ALREADY_LOGOUT.message,
         httpErrors.ALREADY_LOGOUT.code,
       );
@@ -398,7 +398,7 @@ export class AuthService {
       type === IMailType.FORGOT_PASSWORD, // Persist if it's forgot password
     );
     if (!isVerified) {
-      httpBadRequest(
+      throw new httpBadRequest(
         httpErrors.INVALID_OTP.message,
         httpErrors.INVALID_OTP.code,
       );
@@ -410,7 +410,7 @@ export class AuthService {
         const registerData = await this.redisService.get<any>(registerDataKey);
 
         if (!registerData) {
-          httpBadRequest(
+          throw new httpBadRequest(
             httpErrors.INVALID_REGISTER_OTP.message,
             httpErrors.INVALID_REGISTER_OTP.code,
           );
@@ -438,7 +438,7 @@ export class AuthService {
       case IMailType.FORGOT_PASSWORD: {
         const user = await this.userRepository.findOneBy({ email });
         if (!user) {
-          httpNotFound(
+          throw new httpNotFound(
             httpErrors.ACCOUNT_NOT_FOUND.message,
             httpErrors.ACCOUNT_NOT_FOUND.code,
           );
@@ -464,7 +464,7 @@ export class AuthService {
     const user = await this.userRepository.findOneBy({ id: decodedData.id });
 
     if (!user || user!.status !== UserStatus.ACTIVE) {
-      httpNotFound(
+      throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
         httpErrors.ACCOUNT_NOT_FOUND.code,
       );

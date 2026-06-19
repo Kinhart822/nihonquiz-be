@@ -8,60 +8,69 @@ import {
 } from '@nestjs/common';
 
 // 400
-export function httpBadRequest(message?: string, code?: string) {
-  throw new BadRequestException({
-    statusCode: 400,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpBadRequest extends BadRequestException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 400,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 // 401
-export function httpUnAuthorized(message?: string, code?: string) {
-  throw new UnauthorizedException({
-    statusCode: 401,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpUnAuthorized extends UnauthorizedException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 401,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 // 403
-export function httpForbidden(message?: string, code?: string) {
-  throw new ForbiddenException({
-    statusCode: 403,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpForbidden extends ForbiddenException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 403,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 // 404
-export function httpNotFound(message?: string, code?: string) {
-  throw new NotFoundException({
-    statusCode: 404,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpNotFound extends NotFoundException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 404,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 // 500
-export function httpInternalServerErrorException(
-  message?: string,
-  code?: string,
-) {
-  throw new InternalServerErrorException({
-    statusCode: 500,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpInternalServerErrorException extends InternalServerErrorException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 500,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 // 503
-export function httpServiceUnavailable(message?: string, code?: string) {
-  throw new ServiceUnavailableException({
-    statusCode: 503,
-    errorCode: code ?? null,
-    message,
-  });
+export class httpServiceUnavailable extends ServiceUnavailableException {
+  constructor(message?: string, code?: string) {
+    super({
+      statusCode: 503,
+      errorCode: code ?? null,
+      message,
+    });
+  }
 }
 
 export const httpErrors = {
@@ -71,7 +80,7 @@ export const httpErrors = {
     code: 'BAD_REQUEST',
   },
 
-  // user error
+  // User error
   INVALID_USER_ID: {
     message: 'Invalid user ID.',
     code: 'INVALID_USER_ID',
@@ -172,7 +181,7 @@ export const httpErrors = {
     code: 'OTP_ALREADY_SENT',
   },
 
-  // conversation error
+  // Conversation error
   CONVERSATION_NOT_FOUND: {
     message: 'Conversation not found.',
     code: 'CONVERSATION_NOT_FOUND',
@@ -286,7 +295,7 @@ export const httpErrors = {
     code: 'CANNOT_REJOIN_BLOCKED_OR_DELETED_PARTICIPANT',
   },
 
-  // message error
+  // Message error
   MESSAGE_NOT_FOUND: {
     message: 'Message not found.',
     code: 'MESSAGE_NOT_FOUND',
@@ -338,57 +347,7 @@ export const httpErrors = {
     code: 'CANNOT_UNPIN_OTHERS_MESSAGE',
   },
 
-  // friendship error
-  FRIENDSHIP_NOT_FOUND: {
-    message: 'Friendship request not found.',
-    code: 'FRIENDSHIP_NOT_FOUND',
-  },
-  FRIENDSHIP_ALREADY_EXISTED: {
-    message: 'Friendship already existed.',
-    code: 'FRIENDSHIP_ALREADY_EXISTED',
-  },
-  CANNOT_SEND_FRIEND_REQUEST_TO_SELF: {
-    message: 'Cannot send friend request to self.',
-    code: 'CANNOT_SEND_FRIEND_REQUEST_TO_SELF',
-  },
-  INVALID_FRIEND_REQUEST_TARGET: {
-    message: 'Cannot send friend request to this user.',
-    code: 'INVALID_FRIEND_REQUEST_TARGET',
-  },
-  FRIEND_REQUEST_NOT_FOUND: {
-    message: 'Friend request not found.',
-    code: 'FRIEND_REQUEST_NOT_FOUND',
-  },
-  FRIEND_REQUEST_ALREADY_PENDING: {
-    message: 'Friend request is already pending.',
-    code: 'FRIEND_REQUEST_ALREADY_PENDING',
-  },
-  FRIEND_REQUEST_NOT_PENDING: {
-    message: 'Friend request is not pending.',
-    code: 'FRIEND_REQUEST_NOT_PENDING',
-  },
-  CANNOT_SELF_PROCESS_FRIEND_REQUEST: {
-    message: 'Cannot self process your own friend request.',
-    code: 'CANNOT_SELF_PROCESS_FRIEND_REQUEST',
-  },
-  CANNOT_BLOCK_SELF: {
-    message: 'Cannot block yourself.',
-    code: 'CANNOT_BLOCK_SELF',
-  },
-  CANNOT_UNBLOCK_USER: {
-    message: "You cannot unblock this user because you didn't block them.",
-    code: 'CANNOT_UNBLOCK_USER',
-  },
-  FRIENDSHIP_NOT_BLOCKED: {
-    message: 'Friendship is not blocked.',
-    code: 'FRIENDSHIP_NOT_BLOCKED',
-  },
-  FRIENDSHIP_ALREADY_BLOCKED: {
-    message: 'Friendship already blocked.',
-    code: 'FRIENDSHIP_ALREADY_BLOCKED',
-  },
-
-  // system config error
+  // System config error
   SYSTEM_CONFIG_NOT_FOUND: {
     message: 'System config not found.',
     code: 'SYSTEM_CONFIG_NOT_FOUND',
@@ -397,16 +356,8 @@ export const httpErrors = {
     message: 'System config already existed.',
     code: 'SYSTEM_CONFIG_ALREADY_EXISTED',
   },
-  FRIENDSHIP_LIMIT_EXCEEDED: {
-    message: 'You have reached the message limit for non-friends.',
-    code: 'FRIENDSHIP_LIMIT_EXCEEDED',
-  },
-  MAX_FRIEND_REQUESTS_PER_DAY_EXCEEDED: {
-    message: 'You have reached the maximum number of friend requests per day.',
-    code: 'MAX_FRIEND_REQUESTS_PER_DAY_EXCEEDED',
-  },
 
-  // account history error
+  // Account history error
   ACCOUNT_HISTORY_NOT_FOUND: {
     message: 'Account history not found.',
     code: 'ACCOUNT_HISTORY_NOT_FOUND',

@@ -46,5 +46,5 @@ export class AuditLogEntity extends BaseEntity {
   note!: string;
 
   @Column({ name: 'details', type: 'jsonb', nullable: false, default: `'{}'` })
-  details: any;
+  details!: any;
 }
