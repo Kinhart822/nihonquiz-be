@@ -44,7 +44,7 @@ export class MessageFilterDto extends PageOptionsDto {
   @IsArray()
   @IsEnum(MessageType, { each: true })
   @ToArray()
-  readonly types: MessageType[];
+  readonly types?: MessageType[];
 
   @ApiProperty({
     description:
@@ -58,7 +58,7 @@ export class MessageFilterDto extends PageOptionsDto {
   @IsArray()
   @IsEnum(MessageAttachmentType, { each: true })
   @ToArray()
-  readonly attachments: MessageAttachmentType[];
+  readonly attachments?: MessageAttachmentType[];
 
   @ApiProperty({
     description: 'List of message statuses to filter (SENT, DELETED, FAILED)',
@@ -72,7 +72,7 @@ export class MessageFilterDto extends PageOptionsDto {
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsEnum(MessageStatus, { each: true })
   @ToArray()
-  readonly statuses: MessageStatus[];
+  readonly statuses?: MessageStatus[];
 
   @EnumFieldOptional(() => Order, {
     default: Order.DESC,
@@ -112,7 +112,7 @@ export class MessageAttachmentFilterDto extends PageOptionsDto {
   @IsArray()
   @IsEnum(MessageAttachmentStatus, { each: true })
   @ToArray()
-  readonly statuses: MessageAttachmentStatus[];
+  readonly statuses?: MessageAttachmentStatus[];
 
   @ApiProperty({
     description:
@@ -126,7 +126,7 @@ export class MessageAttachmentFilterDto extends PageOptionsDto {
   @IsArray()
   @IsEnum(MessageAttachmentType, { each: true })
   @ToArray()
-  readonly attachments: MessageAttachmentType[];
+  readonly attachments?: MessageAttachmentType[];
 
   @EnumFieldOptional(() => Order, {
     default: Order.DESC,
@@ -170,7 +170,7 @@ export class MessageContentDto {
   })
   @IsInt({ message: 'Conversation ID must be an integer' })
   @Transform(({ value }) => Number(value))
-  conversationId: number;
+  conversationId!: number;
 
   @ApiProperty({
     type: String,
@@ -180,7 +180,7 @@ export class MessageContentDto {
   })
   @IsOptional()
   @IsString()
-  content: string;
+  content?: string;
 }
 
 export class SendMessageDto extends MessageContentDto {
@@ -204,7 +204,7 @@ export class EditMessageDto extends MessageContentDto {
     example: 1,
     required: true,
   })
-  messageId: number;
+  messageId!: number;
 }
 
 export class DeleteMessageDto {
@@ -215,7 +215,7 @@ export class DeleteMessageDto {
     example: 1,
     required: true,
   })
-  messageId: number;
+  messageId!: number;
 }
 
 export class MarkAsReadDto {
@@ -226,7 +226,7 @@ export class MarkAsReadDto {
     example: 1,
     required: true,
   })
-  conversationId: number;
+  conversationId!: number;
 }
 
 export class PinMessageDto {
@@ -237,7 +237,7 @@ export class PinMessageDto {
     example: 1,
     required: true,
   })
-  conversationId: number;
+  conversationId!: number;
 
   @IsInt()
   @ApiProperty({
@@ -246,7 +246,7 @@ export class PinMessageDto {
     example: 1,
     required: true,
   })
-  messageId: number;
+  messageId!: number;
 }
 
 export class UnpinMessageDto {
@@ -257,7 +257,7 @@ export class UnpinMessageDto {
     example: 1,
     required: true,
   })
-  conversationId: number;
+  conversationId!: number;
 
   @IsInt()
   @ApiProperty({
@@ -266,5 +266,5 @@ export class UnpinMessageDto {
     example: 1,
     required: true,
   })
-  messageId: number;
+  messageId!: number;
 }

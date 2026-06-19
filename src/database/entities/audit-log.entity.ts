@@ -15,7 +15,7 @@ export class AuditLogEntity extends BaseEntity {
     name: 'timestamp',
     type: 'bigint',
     nullable: false,
-    default: 'EXTRACT(EPOCH FROM now())::bigint',
+    default: () => '(EXTRACT(EPOCH FROM now())::bigint)',
   })
   timestamp!: number;
 
@@ -26,7 +26,7 @@ export class AuditLogEntity extends BaseEntity {
     name: 'device_info',
     type: 'jsonb',
     nullable: false,
-    default: `'{}'`,
+    default: {},
   })
   deviceInfo!: { browser: any; os: any; device: any };
 
@@ -45,6 +45,6 @@ export class AuditLogEntity extends BaseEntity {
   @Column({ name: 'note', type: 'text', nullable: true })
   note!: string;
 
-  @Column({ name: 'details', type: 'jsonb', nullable: false, default: `'{}'` })
+  @Column({ name: 'details', type: 'jsonb', nullable: false, default: {} })
   details!: any;
 }

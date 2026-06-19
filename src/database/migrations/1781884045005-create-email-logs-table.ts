@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class CreateEmailLogsTable1773291465047 implements MigrationInterface {
+export class CreateEmailLogsTable1781884045005 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
@@ -8,10 +8,23 @@ export class CreateEmailLogsTable1773291465047 implements MigrationInterface {
         columns: [
           {
             name: 'id',
-            type: 'int',
+            type: 'serial',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+          },
+          {
+            name: 'created_at',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updated_at',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'deleted_at',
+            type: 'timestamp',
+            isNullable: true,
           },
           {
             name: 'from',
@@ -35,7 +48,7 @@ export class CreateEmailLogsTable1773291465047 implements MigrationInterface {
           },
           {
             name: 'context',
-            type: 'varchar',
+            type: 'text',
             isNullable: true,
           },
           {
@@ -50,28 +63,12 @@ export class CreateEmailLogsTable1773291465047 implements MigrationInterface {
           },
           {
             name: 'error',
-            type: 'varchar',
-            isNullable: true,
-          },
-          {
-            name: 'created_at',
-            type: 'timestamp',
-            isNullable: false,
-            default: 'now()',
-          },
-          {
-            name: 'updated_at',
-            type: 'timestamp',
-            isNullable: false,
-            default: 'now()',
-          },
-          {
-            name: 'deleted_at',
-            type: 'timestamp',
+            type: 'text',
             isNullable: true,
           },
         ],
       }),
+      true,
     );
   }
 
