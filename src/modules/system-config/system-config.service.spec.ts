@@ -48,6 +48,11 @@ describe('SystemConfigService', () => {
 
   describe('getConfig', () => {
     it('should throw an error if config not found', async () => {
+      /*
+       * Flow: Get Config (Not Found)
+       * 1. Query SystemConfig table by key.
+       * 2. If null is returned, throw NotFound exception.
+       */
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         null,
       );
@@ -58,6 +63,11 @@ describe('SystemConfigService', () => {
     });
 
     it('should return config if found', async () => {
+      /*
+       * Flow: Get Config (Success)
+       * 1. Query SystemConfig table by key.
+       * 2. Return the retrieved configuration object.
+       */
       const mockConfig = { key: 'TEST_KEY', value: 'TEST_VALUE' };
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,
@@ -70,6 +80,11 @@ describe('SystemConfigService', () => {
 
   describe('getSystemConfigs', () => {
     it('should return paginated configs', async () => {
+      /*
+       * Flow: Get System Configs (Paginated)
+       * 1. Call repository method to fetch configs with pagination.
+       * 2. Format result into a PageDto containing data and meta.
+       */
       const mockEntities = [
         { key: 'KEY1', value: 'VAL1' },
         { key: 'KEY2', value: 'VAL2' },
@@ -91,6 +106,11 @@ describe('SystemConfigService', () => {
 
   describe('createSystemConfig', () => {
     it('should throw error if config already exists', async () => {
+      /*
+       * Flow: Create Config (Already Exists)
+       * 1. Query DB to check if key already exists.
+       * 2. If key exists, throw BadRequest exception to prevent duplicates.
+       */
       const mockConfig = { key: 'EXISTING_KEY', value: 'VAL' };
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,
@@ -102,6 +122,12 @@ describe('SystemConfigService', () => {
     });
 
     it('should create and save new config', async () => {
+      /*
+       * Flow: Create Config (Success)
+       * 1. Check DB to ensure key is unique.
+       * 2. Create new SystemConfig entity.
+       * 3. Save to database.
+       */
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         null,
       );
@@ -121,6 +147,11 @@ describe('SystemConfigService', () => {
 
   describe('updateSystemConfig', () => {
     it('should throw error if config not found', async () => {
+      /*
+       * Flow: Update Config (Not Found)
+       * 1. Query DB for existing config by key.
+       * 2. If null, throw NotFound exception.
+       */
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         null,
       );
@@ -131,6 +162,12 @@ describe('SystemConfigService', () => {
     });
 
     it('should update and save config', async () => {
+      /*
+       * Flow: Update Config (Success)
+       * 1. Query DB for existing config by key.
+       * 2. Update the config value.
+       * 3. Save the updated entity to the database.
+       */
       const mockConfig = { key: 'KEY', value: 'OLD_VAL' };
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,
@@ -147,6 +184,11 @@ describe('SystemConfigService', () => {
 
   describe('deleteSystemConfig', () => {
     it('should throw error if config not found', async () => {
+      /*
+       * Flow: Delete Config (Not Found)
+       * 1. Query DB for existing config.
+       * 2. If null, throw NotFound exception.
+       */
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         null,
       );
@@ -157,6 +199,11 @@ describe('SystemConfigService', () => {
     });
 
     it('should delete config', async () => {
+      /*
+       * Flow: Delete Config (Success)
+       * 1. Verify config exists in DB.
+       * 2. Perform hard delete on the configuration record.
+       */
       const mockConfig = { key: 'KEY', value: 'VAL' };
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,

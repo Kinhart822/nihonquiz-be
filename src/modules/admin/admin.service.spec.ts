@@ -117,6 +117,14 @@ describe('AdminService', () => {
 
     describe('blockUser', () => {
       it('should block user successfully', async () => {
+        /*
+         * Flow: Block User
+         * 1. Query DB to ensure requester is Admin and target user exists.
+         * 2. Log action to AccountHistory.
+         * 3. Update user status to BLOCKED in User table.
+         * 4. Update participant status to BLOCKED in Participant table.
+         * 5. Emit 'user.blocked' event via socket.
+         */
         userRepository.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any) // admin
           .mockResolvedValueOnce({ ...mockUser } as any); // user
@@ -136,6 +144,11 @@ describe('AdminService', () => {
       });
 
       it('should throw error if user already blocked', async () => {
+        /*
+         * Flow: Block User Error Handling
+         * 1. Query DB for user and admin.
+         * 2. If target user status is already BLOCKED, throw BadRequest exception.
+         */
         userRepository.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({
@@ -151,6 +164,13 @@ describe('AdminService', () => {
 
     describe('unblockUser', () => {
       it('should unblock user successfully', async () => {
+        /*
+         * Flow: Unblock User
+         * 1. Check if user is currently BLOCKED.
+         * 2. Create history log for unblock action.
+         * 3. Update User and Participant status to ACTIVE.
+         * 4. Emit 'user.unblocked' socket event.
+         */
         userRepository.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({
@@ -173,6 +193,11 @@ describe('AdminService', () => {
       });
 
       it('should throw error if user not blocked', async () => {
+        /*
+         * Flow: Unblock User Error Handling
+         * 1. Fetch user status.
+         * 2. If user is NOT blocked, throw BadRequest exception.
+         */
         userRepository.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({ ...mockUser } as any);
@@ -185,6 +210,14 @@ describe('AdminService', () => {
 
     describe('deleteUser', () => {
       it('should delete user successfully', async () => {
+        /*
+         * Flow: Delete User (Soft Delete)
+         * 1. Verify admin permissions.
+         * 2. Log deletion to AccountHistory.
+         * 3. Set user status to DELETED (soft delete approach).
+         * 4. Update all participant records for this user to DELETED.
+         * 5. Emit 'user.deleted' socket event to kick user out.
+         */
         userRepository.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({ ...mockUser } as any);
@@ -208,6 +241,11 @@ describe('AdminService', () => {
   describe('Admin Management', () => {
     describe('createAdmin', () => {
       it('should throw error if admin exists', async () => {
+        /*
+         * Flow: Create Admin Error
+         * 1. Look up user by email or username.
+         * 2. If an account already exists, throw BadRequest exception.
+         */
         userRepository.findOne.mockResolvedValue({ id: 1 } as any);
         await expect(
           service.createAdmin({
@@ -219,6 +257,12 @@ describe('AdminService', () => {
       });
 
       it('should create new admin', async () => {
+        /*
+         * Flow: Create Admin
+         * 1. Ensure no existing user has the same credentials.
+         * 2. Hash password and create User entity with role ADMIN.
+         * 3. Save to database.
+         */
         userRepository.findOne.mockResolvedValue(null);
         userRepository.create.mockReturnValue({
           id: 1,
@@ -242,6 +286,12 @@ describe('AdminService', () => {
 
     describe('updateAdmin', () => {
       it('should update admin details', async () => {
+        /*
+         * Flow: Update Admin
+         * 1. Retrieve admin user to update.
+         * 2. Verify new username/email doesn't belong to another user.
+         * 3. Save updated fields to database.
+         */
         const mockAdmin = {
           id: 1,
           role: RoleUser.ADMIN,
@@ -265,6 +315,14 @@ describe('AdminService', () => {
   describe('Dashboard & Notifications', () => {
     describe('getAdminDashboardStats', () => {
       it('should return stats', async () => {
+        /*
+         * Flow: Dashboard Stats
+         * 1. Ensure requester is admin.
+         * 2. Count total students.
+         * 3. Count total teachers.
+         * 4. Count total messages across system.
+         * 5. Return aggregated stats object.
+         */
         userRepository.findOne.mockResolvedValue({
           id: 1,
           role: RoleUser.ADMIN,
@@ -281,6 +339,12 @@ describe('AdminService', () => {
 
     describe('sendSystemNotification', () => {
       it('should queue system message', async () => {
+        /*
+         * Flow: Send System Broadcast Notification
+         * 1. Verify admin permissions.
+         * 2. Add broadcast job to BullMQ SystemMessageQueue.
+         * 3. Background worker will process and deliver to all users.
+         */
         userRepository.findOne.mockResolvedValue({
           id: 1,
           role: RoleUser.ADMIN,

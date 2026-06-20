@@ -70,6 +70,11 @@ describe('UserService', () => {
 
   describe('getProfile', () => {
     it('should throw an error if user not found', async () => {
+      /*
+       * Flow: Get User Profile (Not Found)
+       * 1. Query User DB by ID.
+       * 2. If null, throw NotFound exception.
+       */
       userRepository.findOne.mockResolvedValue(null);
 
       await expect(service.getProfile(1)).rejects.toThrow(httpNotFound);
@@ -77,6 +82,11 @@ describe('UserService', () => {
     });
 
     it('should return user profile if user exists', async () => {
+      /*
+       * Flow: Get User Profile (Success)
+       * 1. Query User DB by ID.
+       * 2. If exists, return user entity.
+       */
       const mockUser = { id: 1, username: 'testuser', email: 'test@test.com' };
       userRepository.findOne.mockResolvedValue(mockUser as any);
 
@@ -91,12 +101,22 @@ describe('UserService', () => {
 
   describe('updateProfile', () => {
     it('should throw an error if user not found', async () => {
+      /*
+       * Flow: Update Profile (User Not Found)
+       * 1. Attempt to find the user in DB.
+       * 2. If user doesn't exist, throw NotFound exception.
+       */
       userRepository.findOne.mockResolvedValue(null);
 
       await expect(service.updateProfile(1, {})).rejects.toThrow(httpNotFound);
     });
 
     it('should throw an error if username already exists', async () => {
+      /*
+       * Flow: Update Profile (Duplicate Username)
+       * 1. Check if the updated username exists for ANOTHER user in DB.
+       * 2. If duplicate, throw BadRequest exception.
+       */
       const mockUser = { id: 1, username: 'olduser' };
       userRepository.findOne.mockResolvedValue(mockUser as any);
       userRepository.existsBy.mockResolvedValue(true);
@@ -110,6 +130,12 @@ describe('UserService', () => {
     });
 
     it('should throw an error if avatar file is too large', async () => {
+      /*
+       * Flow: Update Profile (Avatar File Too Large)
+       * 1. Read MAX_SIZE from ConfigService.
+       * 2. Check uploaded file size against MAX_SIZE.
+       * 3. If file exceeds the limit, throw BadRequest exception.
+       */
       const mockUser = { id: 1, username: 'olduser' };
       userRepository.findOne.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(100); // 100 bytes max
@@ -122,6 +148,13 @@ describe('UserService', () => {
     });
 
     it('should queue avatar file upload if provided', async () => {
+      /*
+       * Flow: Update Profile (Upload Avatar Success)
+       * 1. Verify user exists and file is within size limits.
+       * 2. Update basic string fields (e.g. description).
+       * 3. Queue the avatar file into FILE_UPLOAD_QUEUE.
+       * 4. Save DB record & return success message.
+       */
       const mockUser: any = { id: 1, username: 'olduser' };
       userRepository.findOne.mockResolvedValue(mockUser);
       configService.get.mockReturnValue(1000); // 1000 bytes max
@@ -157,6 +190,12 @@ describe('UserService', () => {
     });
 
     it('should queue background file upload if provided', async () => {
+      /*
+       * Flow: Update Profile (Upload Background Success)
+       * 1. Verify user exists and file is within size limits.
+       * 2. Queue the background file into FILE_UPLOAD_QUEUE.
+       * 3. Save DB record & return success message.
+       */
       const mockUser = { id: 1, username: 'olduser' };
       userRepository.findOne.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(1000);
