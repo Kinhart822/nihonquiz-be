@@ -13,9 +13,12 @@ import { GuardModule } from './modules/auth/guards/guard.module';
 import { ClassModule } from './modules/class/class.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { CourseModule } from './modules/course/course.module';
-import { LessonModule } from './modules/lesson/lesson.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { GrammarModule } from './modules/grammar/grammar.module';
+import { KanjiModule } from './modules/kanji/kanji.module';
+import { LessonModule } from './modules/lesson/lesson.module';
 import { SocketModule } from './modules/socket/socket.module';
+import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { PipeModule } from './pipes/pipe.module';
 
 @Module({
@@ -48,8 +51,11 @@ import { PipeModule } from './pipes/pipe.module';
     CloudinaryModule,
     ClassModule,
     CourseModule,
-    LessonModule,
     DashboardModule,
+    GrammarModule,
+    KanjiModule,
+    LessonModule,
+    VocabularyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

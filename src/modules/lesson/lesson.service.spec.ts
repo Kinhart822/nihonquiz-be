@@ -171,7 +171,7 @@ describe('LessonService', () => {
        * 4. Verify repository.deleteEntityById is called with correct ID.
        */
       repository.getEntityById.mockResolvedValue({ id: 1 } as any);
-      repository.deleteEntityById.mockResolvedValue(undefined);
+      repository.deleteEntityById.mockResolvedValue(true);
 
       await service.deleteLesson(1);
       expect(repository.deleteEntityById).toHaveBeenCalledWith(1);

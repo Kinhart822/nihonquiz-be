@@ -12,7 +12,6 @@ import {
 import { ConversationEntity } from '@entities/conversation.entity';
 import { MessageAttachmentEntity } from '@entities/message-attachment.entity';
 import { MessageEntity } from '@entities/message.entity';
-import { SystemConfigService } from '@modules/system-config/system-config.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { ConversationRepository } from '@repositories/conversation.repository';
@@ -58,7 +57,6 @@ export class MessageService {
     private readonly socketEmitterService: SocketEmitterService,
     private readonly messageAttachmentRepo: MessageAttachmentRepository,
     private readonly messagePinRepo: MessagePinRepository,
-    private readonly systemConfigService: SystemConfigService,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
   ) {}
 

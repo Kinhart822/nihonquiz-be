@@ -395,4 +395,16 @@ export const httpErrors = {
     message: 'Lesson not found.',
     code: 'LESSON_NOT_FOUND',
   },
+  VOCABULARY_NOT_FOUND: {
+    message: 'Vocabulary not found.',
+    code: 'VOCABULARY_NOT_FOUND',
+  },
+  GRAMMAR_NOT_FOUND: {
+    message: 'Grammar not found.',
+    code: 'GRAMMAR_NOT_FOUND',
+  },
+  KANJI_NOT_FOUND: {
+    message: 'Kanji not found.',
+    code: 'KANJI_NOT_FOUND',
+  },
 };

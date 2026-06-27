@@ -6,7 +6,6 @@ import {
   LessonFilterDto,
 } from './dtos/lesson.req.dto';
 import { LessonResDto } from './dtos/lesson.res.dto';
-import { PageOptionsDto } from '@shared/dtos/page-option.dto';
 import { PageDto } from '@shared/dtos/page.dto';
 import { PageMetaDto } from '@shared/dtos/page-meta.dto';
 import { plainToInstance } from 'class-transformer';
