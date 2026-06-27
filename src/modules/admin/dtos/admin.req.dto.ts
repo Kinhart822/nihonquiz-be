@@ -6,7 +6,7 @@ import {
 } from '@shared/decorators/field.decorator';
 import { PageOptionsDto } from '@shared/dtos/page-option.dto';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UserFilterDto } from '../../user/dto/user.req.dto';
+import { UserFilterDto } from '../../user/dtos/user.req.dto';
 
 export class CreateDto {
   @ApiProperty()

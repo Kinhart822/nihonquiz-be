@@ -7,7 +7,7 @@ import {
   MarkAsReadDto,
   PinMessageDto,
   UnpinMessageDto,
-} from './dto/message.req.dto';
+} from './dtos/message.req.dto';
 
 describe('MessageController', () => {
   let controller: MessageController;

@@ -11,21 +11,22 @@ import {
 } from '@shared/exceptions/http-exception';
 import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 import { Transactional } from 'typeorm-transactional';
-import { UpdateProfileDto } from './dto/user.req.dto';
-import { UserResDto } from './dto/user.res.dto';
+import { ChangePasswordDto, UpdateProfileDto } from './dtos/user.req.dto';
+import { UserResDto } from './dtos/user.res.dto';
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly userRepository: UserRepository,
+    private readonly userRepo: UserRepository,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
     private readonly configService: ConfigService,
   ) {}
 
   // ==================== GET PROFILE ====================
   async getProfile(userId: number): Promise<UserResDto> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -46,7 +47,7 @@ export class UserService {
     backgroundFile?: Express.Multer.File,
   ) {
     // Check user exists
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -56,7 +57,7 @@ export class UserService {
 
     // Update profile
     if (payload.username && payload.username !== user!.username) {
-      const existing = await this.userRepository.existsBy({
+      const existing = await this.userRepo.existsBy({
         username: payload.username,
       });
       if (existing) {
@@ -116,11 +117,44 @@ export class UserService {
       });
     }
 
-    await this.userRepository.save(user!);
+    await this.userRepo.save(user!);
 
     // Return message
     return {
       message: UPDATE_PROFILE_RES,
     };
+  }
+
+  // ==================== CHANGE PASSWORD ====================
+  @Transactional()
+  async changePassword(userId: number, payload: ChangePasswordDto) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new httpNotFound(
+        httpErrors.ACCOUNT_NOT_FOUND.message,
+        httpErrors.ACCOUNT_NOT_FOUND.code,
+      );
+    }
+
+    if (!user.password) {
+      throw new httpBadRequest(
+        httpErrors.CHANGE_PASSWORD_FAILED.message,
+        httpErrors.CHANGE_PASSWORD_FAILED.code,
+      );
+    }
+
+    const isMatch = await bcrypt.compare(payload.oldPassword, user.password);
+    if (!isMatch) {
+      throw new httpBadRequest(
+        httpErrors.INVALID_OLD_PASSWORD.message,
+        httpErrors.INVALID_OLD_PASSWORD.code,
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
+    user.password = hashedPassword;
+    await this.userRepo.save(user);
+
+    return { message: 'Password changed successfully' };
   }
 }

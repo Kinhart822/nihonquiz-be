@@ -8,7 +8,7 @@ import {
   RoleUser,
   UserStatus,
 } from '@constants/user.constant';
-import { UserResDto } from '@modules/user/dto/user.res.dto';
+import { UserResDto } from '@modules/user/dtos/user.res.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { AccountHistoryRepository } from '@repositories/account-history.repository';
@@ -35,19 +35,16 @@ import {
   CreateAdminDto,
   EditAdminDto,
   SystemNotificationDto,
-} from './dto/admin.req.dto';
-import {
-  AccountHistoryResDto,
-  AdminDashboardResDto,
-} from './dto/admin.res.dto';
+} from './dtos/admin.req.dto';
+import { AccountHistoryResDto } from './dtos/admin.res.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly accountHistoryRepository: AccountHistoryRepository,
-    private readonly participantRepository: ParticipantRepository,
-    private readonly messageRepository: MessageRepository,
+    private readonly userRepo: UserRepository,
+    private readonly accountHistoryRepo: AccountHistoryRepository,
+    private readonly participantRepo: ParticipantRepository,
+    private readonly messageRepo: MessageRepository,
     private readonly socketEmitterService: SocketEmitterService,
     @InjectQueue(SYSTEM_MESSAGE_QUEUE)
     private readonly systemMessageQueue: Queue,
@@ -72,12 +69,12 @@ export class AdminService {
 
     user.status = UserStatus.BLOCKED;
 
-    await this.participantRepository.update(
+    await this.participantRepo.update(
       { userId: user.id },
       { status: ParticipantStatus.BLOCKED },
     );
 
-    await this.userRepository.save(user);
+    await this.userRepo.save(user);
     await this.createAccountHistory({
       userId,
       type: AccountHistoryType.BLOCKED,
@@ -116,12 +113,12 @@ export class AdminService {
 
     user.status = UserStatus.ACTIVE;
 
-    await this.participantRepository.update(
+    await this.participantRepo.update(
       { userId: user.id },
       { status: ParticipantStatus.ACTIVE },
     );
 
-    await this.userRepository.save(user);
+    await this.userRepo.save(user);
     await this.createAccountHistory({
       userId,
       type: AccountHistoryType.UNBLOCKED,
@@ -160,12 +157,12 @@ export class AdminService {
 
     user.status = UserStatus.DELETED;
 
-    await this.participantRepository.update(
+    await this.participantRepo.update(
       { userId: user.id },
       { status: ParticipantStatus.DELETED },
     );
 
-    await this.userRepository.save(user);
+    await this.userRepo.save(user);
     await this.createAccountHistory({
       userId,
       type: AccountHistoryType.DELETED,
@@ -193,7 +190,7 @@ export class AdminService {
    * Get list of admin accounts
    */
   async getAdminList(filterDto: AdminFilterDto): Promise<PageDto<UserResDto>> {
-    const { entities, total } = await this.userRepository.getUserListByFilter(
+    const { entities, total } = await this.userRepo.getUserListByFilter(
       filterDto,
       { isAdmin: true, isTeacher: false, isStudent: false },
     );
@@ -212,7 +209,7 @@ export class AdminService {
    * Get info admin account
    */
   async getAdminInfo(id: number): Promise<UserResDto> {
-    const user = await this.userRepository.findOne({
+    const user = await this.userRepo.findOne({
       where: { id, role: RoleUser.ADMIN },
     });
     if (!user) {
@@ -234,7 +231,7 @@ export class AdminService {
     const { email, username, password, description } = dto;
 
     // Check account existed
-    const existed = await this.userRepository.findOne({
+    const existed = await this.userRepo.findOne({
       where: [{ email }, { username }],
     });
     if (existed) {
@@ -248,7 +245,7 @@ export class AdminService {
     const hashedPassword = await bcrypt.hash(password!, 12);
 
     // Create admin
-    const admin = this.userRepository.create({
+    const admin = this.userRepo.create({
       email,
       username,
       password: hashedPassword,
@@ -257,7 +254,7 @@ export class AdminService {
       description,
     });
 
-    const saved = await this.userRepository.save(admin);
+    const saved = await this.userRepo.save(admin);
     return plainToInstance(UserResDto, saved, {
       excludeExtraneousValues: true,
     });
@@ -271,7 +268,7 @@ export class AdminService {
     const { email, username, password, description } = dto;
 
     // Check admin existed
-    const admin = await this.userRepository.findOne({
+    const admin = await this.userRepo.findOne({
       where: { id, role: RoleUser.ADMIN },
     });
     if (!admin) {
@@ -286,7 +283,7 @@ export class AdminService {
     }
 
     if (username) {
-      const existed = await this.userRepository.findOne({
+      const existed = await this.userRepo.findOne({
         where: { username },
       });
       if (existed) {
@@ -299,7 +296,7 @@ export class AdminService {
     }
 
     if (email) {
-      const existed = await this.userRepository.findOne({
+      const existed = await this.userRepo.findOne({
         where: { email },
       });
       if (existed) {
@@ -315,7 +312,7 @@ export class AdminService {
       admin.description = description;
     }
 
-    const saved = await this.userRepository.save(admin);
+    const saved = await this.userRepo.save(admin);
     return plainToInstance(UserResDto, saved, {
       excludeExtraneousValues: true,
     });
@@ -326,7 +323,7 @@ export class AdminService {
    */
   @Transactional()
   async deleteAdmin(adminId: number) {
-    const admin = await this.userRepository.findOne({
+    const admin = await this.userRepo.findOne({
       where: { id: adminId, role: RoleUser.ADMIN },
     });
     if (!admin) {
@@ -336,7 +333,7 @@ export class AdminService {
       );
     }
 
-    await this.userRepository.delete({ id: adminId });
+    await this.userRepo.delete({ id: adminId });
     return true;
   }
 
@@ -353,8 +350,8 @@ export class AdminService {
     status?: string;
     actionBy?: number;
   }) {
-    const history = this.accountHistoryRepository.create(data);
-    return await this.accountHistoryRepository.save(history);
+    const history = this.accountHistoryRepo.create(data);
+    return await this.accountHistoryRepo.save(history);
   }
 
   /**
@@ -364,9 +361,7 @@ export class AdminService {
     filterDto: AccountHistoryFilterDto,
   ): Promise<PageDto<AccountHistoryResDto>> {
     const { entities, total } =
-      await this.accountHistoryRepository.getAccountHistoryListByFilter(
-        filterDto,
-      );
+      await this.accountHistoryRepo.getAccountHistoryListByFilter(filterDto);
 
     const mappedItems = entities.map((history) => {
       return plainToInstance(AccountHistoryResDto, history, {
@@ -382,7 +377,7 @@ export class AdminService {
    * Get info account history
    */
   async getAccountHistoryInfo(id: number) {
-    const history = await this.accountHistoryRepository.findOne({
+    const history = await this.accountHistoryRepo.findOne({
       where: { id },
     });
     if (!history) {
@@ -396,40 +391,7 @@ export class AdminService {
     });
   }
 
-  // ==================== DASHBOARD & NOTIFICATIONS ====================
-
-  /**
-   * Get dashboard statistics
-   */
-  async getAdminDashboardStats(adminId: number): Promise<AdminDashboardResDto> {
-    await this.validateAdmin(adminId);
-
-    const [
-      totalStudents,
-      totalTeachers,
-      // totalCourses,
-      // totalClasses,
-      // totalLessons,
-      totalMessages,
-    ] = await Promise.all([
-      this.userRepository.count({
-        where: { role: RoleUser.STUDENT, status: UserStatus.ACTIVE },
-      }),
-      this.userRepository.count({
-        where: { role: RoleUser.TEACHER, status: UserStatus.INACTIVE },
-      }),
-      this.messageRepository.count(),
-    ]);
-
-    return {
-      totalStudents,
-      totalTeachers,
-      // totalCourses,
-      // totalClasses,
-      // totalLessons,
-      totalMessages,
-    };
-  }
+  // ==================== NOTIFICATIONS ====================
 
   /**
    * Send system notification (message) to all users (Background Job)
@@ -452,7 +414,7 @@ export class AdminService {
    * Validate that an admin exists
    */
   private async validateAdmin(adminId: number) {
-    const admin = await this.userRepository.findOne({
+    const admin = await this.userRepo.findOne({
       where: { id: adminId, role: RoleUser.ADMIN },
     });
     if (!admin) {
@@ -468,7 +430,7 @@ export class AdminService {
    * Validate that a user exists
    */
   private async validateUserExists(userId: number) {
-    const user = await this.userRepository.findOne({
+    const user = await this.userRepo.findOne({
       where: { id: userId, role: In([RoleUser.STUDENT, RoleUser.TEACHER]) },
     });
     if (!user) {

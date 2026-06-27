@@ -48,13 +48,14 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private readonly userRepository: UserRepository,
+    private readonly userRepo: UserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
   ) {}
 
+  // ==================== HELPER METHODS ====================
   // Hash password
   async hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 12);
@@ -73,7 +74,7 @@ export class AuthService {
     email: string,
     pass: string,
   ): Promise<Partial<UserEntity> | null> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepo.findOneBy({ email });
     if (
       user &&
       user.password &&
@@ -106,12 +107,13 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  // ==================== REGISTER & LOGIN ====================
   // Register
   async register(dto: RegisterReqDto) {
     const { email, username, password } = dto;
 
     // Check account existed
-    const account = await this.userRepository.findOneBy({ email });
+    const account = await this.userRepo.findOneBy({ email });
     if (account) {
       throw new httpBadRequest(
         httpErrors.ACCOUNT_EXISTED.message,
@@ -120,7 +122,7 @@ export class AuthService {
     }
 
     // Check username existed
-    const usernameExisted = await this.userRepository.findOneBy({ username });
+    const usernameExisted = await this.userRepo.findOneBy({ username });
     if (usernameExisted) {
       throw new httpBadRequest(
         httpErrors.USERNAME_EXISTED.message,
@@ -159,117 +161,9 @@ export class AuthService {
     };
   }
 
-  // Forgot Password
-  async forgotPassword(dto: EmailBodyReqDto): Promise<any> {
-    const user = await this.userRepository.findOneBy({ email: dto.email });
-    if (!user) {
-      throw new httpNotFound(
-        httpErrors.ACCOUNT_NOT_FOUND.message,
-        httpErrors.ACCOUNT_NOT_FOUND.code,
-      );
-    }
-
-    if (user!.status === UserStatus.BLOCKED) {
-      throw new httpBadRequest(
-        httpErrors.BLOCKED_USER.message,
-        httpErrors.BLOCKED_USER.code,
-      );
-    }
-
-    const isOTPExist = await this.mailService.isOTPExist(
-      dto.email,
-      IMailType.FORGOT_PASSWORD,
-    );
-    if (isOTPExist) {
-      throw new httpBadRequest(
-        httpErrors.OTP_ALREADY_SENT.message,
-        httpErrors.OTP_ALREADY_SENT.code,
-      );
-    }
-
-    // Send OTP for forgot password
-    await this.mailService.generateAndSendOTP(
-      dto.email,
-      IMailType.FORGOT_PASSWORD,
-    );
-
-    return { message: FORGOT_PASSWORD_RES };
-  }
-
-  // Resend Code
-  async resendCode(dto: ResendCodeReqDto): Promise<any> {
-    const { email, type } = dto;
-
-    if (type === IMailType.SIGN_UP) {
-      const registerDataKey = getRegisterDataKey(email);
-      const registerData = await this.redisService.get(registerDataKey);
-
-      if (!registerData) {
-        throw new httpBadRequest(
-          httpErrors.INVALID_REGISTER_OTP.message,
-          httpErrors.INVALID_REGISTER_OTP.code,
-        );
-      }
-    } else {
-      const user = await this.userRepository.findOneBy({ email });
-
-      if (!user) {
-        throw new httpNotFound(
-          httpErrors.ACCOUNT_NOT_FOUND.message,
-          httpErrors.ACCOUNT_NOT_FOUND.code,
-        );
-      }
-
-      if (user!.status === UserStatus.BLOCKED) {
-        throw new httpBadRequest(
-          httpErrors.BLOCKED_USER.message,
-          httpErrors.BLOCKED_USER.code,
-        );
-      }
-    }
-
-    await this.mailService.generateAndSendOTP(email, type);
-
-    return { message: RESEND_RES(type) };
-  }
-
-  // Reset Password
-  @Transactional()
-  async resetPassword(dto: ResetPasswordReqDto): Promise<any> {
-    const { email, code, password } = dto;
-
-    const isVerified = await this.mailService.verifyOTP(
-      email,
-      code,
-      IMailType.FORGOT_PASSWORD,
-      true, // Persist OTP for action
-    );
-
-    if (!isVerified) {
-      throw new httpBadRequest(
-        httpErrors.INVALID_OTP.message,
-        httpErrors.INVALID_OTP.code,
-      );
-    }
-
-    const user = await this.userRepository.findOneBy({ email });
-    if (!user) {
-      throw new httpNotFound(
-        httpErrors.ACCOUNT_NOT_FOUND.message,
-        httpErrors.ACCOUNT_NOT_FOUND.code,
-      );
-    }
-
-    const hashedPassword = await this.hashPassword(password);
-    await this.userRepository.update(user!.id, { password: hashedPassword });
-    await this.mailService.clearOTP(email, IMailType.FORGOT_PASSWORD);
-
-    return { message: RESET_PASSWORD_RES };
-  }
-
   // Login with Email/Password
   async signIn(dto: LoginReqDto): Promise<LoginResDto> {
-    const user = await this.userRepository.findOneBy({ email: dto.email });
+    const user = await this.userRepo.findOneBy({ email: dto.email });
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -294,51 +188,12 @@ export class AuthService {
 
     if (user!.status === UserStatus.INACTIVE) {
       user!.status = UserStatus.ACTIVE;
-      await this.userRepository.update(user!.id, { status: UserStatus.ACTIVE });
+      await this.userRepo.update(user!.id, { status: UserStatus.ACTIVE });
     } else if (user!.status === UserStatus.BLOCKED) {
       throw new httpBadRequest(
         httpErrors.BLOCKED_USER.message,
         httpErrors.BLOCKED_USER.code,
       );
-    }
-
-    return this.login(user!);
-  }
-
-  // Login/Register with Google
-  @Transactional()
-  async googleLogin(req: any): Promise<LoginResDto | null> {
-    if (!req.user) return null;
-    const { email, googleId } = req.user;
-    this.logger.log(`Google Login Attempt: ${email} (${googleId})`);
-
-    let user = await this.userRepository.findOneBy({ googleId });
-
-    if (!user) {
-      // Check if user exists with the same email
-      user = await this.userRepository.findOneBy({ email });
-      if (user) {
-        // Link googleId to existing user
-        user.googleId = googleId;
-        if (user!.status === UserStatus.INACTIVE) {
-          user!.status = UserStatus.ACTIVE;
-        } else if (user!.status === UserStatus.BLOCKED) {
-          throw new httpBadRequest(
-            httpErrors.BLOCKED_USER.message,
-            httpErrors.BLOCKED_USER.code,
-          );
-        }
-        await this.userRepository.save(user);
-      } else {
-        // Create new user
-        user = this.userRepository.create({
-          email,
-          googleId,
-          accessMethod: AccessMethod.GOOGLE,
-          status: UserStatus.ACTIVE,
-        });
-        await this.userRepository.save(user);
-      }
     }
 
     return this.login(user!);
@@ -361,9 +216,10 @@ export class AuthService {
     });
   }
 
+  // ==================== LOGOUT ====================
   // Logout
   async logout(userId: number): Promise<any> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -378,10 +234,11 @@ export class AuthService {
       );
     }
 
-    await this.userRepository.update(userId, { status: UserStatus.INACTIVE });
+    await this.userRepo.update(userId, { status: UserStatus.INACTIVE });
     return { message: LOGOUT_RES };
   }
 
+  // ==================== OTP & PASSWORD ====================
   /**
    * Verify OTP and execute pre-defined action
    */
@@ -416,7 +273,7 @@ export class AuthService {
           );
         }
 
-        const newUser = this.userRepository.create({
+        const newUser = this.userRepo.create({
           email: registerData.email,
           username: registerData.username,
           password: registerData.password,
@@ -424,7 +281,7 @@ export class AuthService {
           status: UserStatus.ACTIVE,
         });
 
-        const savedUser = await this.userRepository.save(newUser);
+        const savedUser = await this.userRepo.save(newUser);
         await this.redisService.del(registerDataKey);
 
         return {
@@ -436,7 +293,7 @@ export class AuthService {
       }
 
       case IMailType.FORGOT_PASSWORD: {
-        const user = await this.userRepository.findOneBy({ email });
+        const user = await this.userRepo.findOneBy({ email });
         if (!user) {
           throw new httpNotFound(
             httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -451,6 +308,115 @@ export class AuthService {
     }
   }
 
+  // Forgot Password
+  async forgotPassword(dto: EmailBodyReqDto): Promise<any> {
+    const user = await this.userRepo.findOneBy({ email: dto.email });
+    if (!user) {
+      throw new httpNotFound(
+        httpErrors.ACCOUNT_NOT_FOUND.message,
+        httpErrors.ACCOUNT_NOT_FOUND.code,
+      );
+    }
+
+    if (user!.status === UserStatus.BLOCKED) {
+      throw new httpBadRequest(
+        httpErrors.BLOCKED_USER.message,
+        httpErrors.BLOCKED_USER.code,
+      );
+    }
+
+    const isOTPExist = await this.mailService.isOTPExist(
+      dto.email,
+      IMailType.FORGOT_PASSWORD,
+    );
+    if (isOTPExist) {
+      throw new httpBadRequest(
+        httpErrors.OTP_ALREADY_SENT.message,
+        httpErrors.OTP_ALREADY_SENT.code,
+      );
+    }
+
+    // Send OTP for forgot password
+    await this.mailService.generateAndSendOTP(
+      dto.email,
+      IMailType.FORGOT_PASSWORD,
+    );
+
+    return { message: FORGOT_PASSWORD_RES };
+  }
+
+  // Reset Password
+  @Transactional()
+  async resetPassword(dto: ResetPasswordReqDto): Promise<any> {
+    const { email, code, password } = dto;
+
+    const isVerified = await this.mailService.verifyOTP(
+      email,
+      code,
+      IMailType.FORGOT_PASSWORD,
+      true, // Persist OTP for action
+    );
+
+    if (!isVerified) {
+      throw new httpBadRequest(
+        httpErrors.INVALID_OTP.message,
+        httpErrors.INVALID_OTP.code,
+      );
+    }
+
+    const user = await this.userRepo.findOneBy({ email });
+    if (!user) {
+      throw new httpNotFound(
+        httpErrors.ACCOUNT_NOT_FOUND.message,
+        httpErrors.ACCOUNT_NOT_FOUND.code,
+      );
+    }
+
+    const hashedPassword = await this.hashPassword(password);
+    await this.userRepo.update(user!.id, { password: hashedPassword });
+    await this.mailService.clearOTP(email, IMailType.FORGOT_PASSWORD);
+
+    return { message: RESET_PASSWORD_RES };
+  }
+
+  // Resend Code
+  async resendCode(dto: ResendCodeReqDto): Promise<any> {
+    const { email, type } = dto;
+
+    if (type === IMailType.SIGN_UP) {
+      const registerDataKey = getRegisterDataKey(email);
+      const registerData = await this.redisService.get(registerDataKey);
+
+      if (!registerData) {
+        throw new httpBadRequest(
+          httpErrors.INVALID_REGISTER_OTP.message,
+          httpErrors.INVALID_REGISTER_OTP.code,
+        );
+      }
+    } else {
+      const user = await this.userRepo.findOneBy({ email });
+
+      if (!user) {
+        throw new httpNotFound(
+          httpErrors.ACCOUNT_NOT_FOUND.message,
+          httpErrors.ACCOUNT_NOT_FOUND.code,
+        );
+      }
+
+      if (user!.status === UserStatus.BLOCKED) {
+        throw new httpBadRequest(
+          httpErrors.BLOCKED_USER.message,
+          httpErrors.BLOCKED_USER.code,
+        );
+      }
+    }
+
+    await this.mailService.generateAndSendOTP(email, type);
+
+    return { message: RESEND_RES(type) };
+  }
+
+  // ==================== REFRESH TOKEN ====================
   // Refresh token
   async refreshToken(data: RefreshTokenReqDto): Promise<RefreshTokenResDto> {
     const { refreshToken } = data;
@@ -461,7 +427,7 @@ export class AuthService {
       },
     );
 
-    const user = await this.userRepository.findOneBy({ id: decodedData.id });
+    const user = await this.userRepo.findOneBy({ id: decodedData.id });
 
     if (!user || user!.status !== UserStatus.ACTIVE) {
       throw new httpNotFound(
@@ -478,5 +444,45 @@ export class AuthService {
     };
 
     return this.generateToken(payload);
+  }
+
+  // ==================== GOOGLE AUTH ====================
+  // Login/Register with Google
+  @Transactional()
+  async googleLogin(req: any): Promise<LoginResDto | null> {
+    if (!req.user) return null;
+    const { email, googleId } = req.user;
+    this.logger.log(`Google Login Attempt: ${email} (${googleId})`);
+
+    let user = await this.userRepo.findOneBy({ googleId });
+
+    if (!user) {
+      // Check if user exists with the same email
+      user = await this.userRepo.findOneBy({ email });
+      if (user) {
+        // Link googleId to existing user
+        user.googleId = googleId;
+        if (user!.status === UserStatus.INACTIVE) {
+          user!.status = UserStatus.ACTIVE;
+        } else if (user!.status === UserStatus.BLOCKED) {
+          throw new httpBadRequest(
+            httpErrors.BLOCKED_USER.message,
+            httpErrors.BLOCKED_USER.code,
+          );
+        }
+        await this.userRepo.save(user);
+      } else {
+        // Create new user
+        user = this.userRepo.create({
+          email,
+          googleId,
+          accessMethod: AccessMethod.GOOGLE,
+          status: UserStatus.ACTIVE,
+        });
+        await this.userRepo.save(user);
+      }
+    }
+
+    return this.login(user!);
   }
 }

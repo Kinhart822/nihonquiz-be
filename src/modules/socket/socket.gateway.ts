@@ -54,7 +54,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new UnauthorizedException('Invalid token');
       }
       return jwtData;
-    } catch (_error) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

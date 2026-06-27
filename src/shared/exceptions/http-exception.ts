@@ -97,6 +97,14 @@ export const httpErrors = {
     message: 'Username already existed.',
     code: 'USERNAME_EXISTED',
   },
+  CHANGE_PASSWORD_FAILED: {
+    message: 'User registered via Google, cannot change password.',
+    code: 'CHANGE_PASSWORD_FAILED',
+  },
+  INVALID_OLD_PASSWORD: {
+    message: 'Invalid old password.',
+    code: 'INVALID_OLD_PASSWORD',
+  },
   ACCOUNT_HASH_NOT_MATCH: {
     message: 'Account adress and hash message are not matched.',
     code: 'ACCOUNT_HASH_NOT_MATCH',
@@ -361,5 +369,30 @@ export const httpErrors = {
   ACCOUNT_HISTORY_NOT_FOUND: {
     message: 'Account history not found.',
     code: 'ACCOUNT_HISTORY_NOT_FOUND',
+  },
+  // Class error
+  CLASS_NOT_FOUND: {
+    message: 'Class not found.',
+    code: 'CLASS_NOT_FOUND',
+  },
+  STUDENT_NOT_IN_CLASS: {
+    message: 'Student not in this class.',
+    code: 'STUDENT_NOT_IN_CLASS',
+  },
+  INVALID_CLASS_CODE: {
+    message: 'Invalid class code.',
+    code: 'INVALID_CLASS_CODE',
+  },
+
+  // Course error
+  COURSE_NOT_FOUND: {
+    message: 'Course not found.',
+    code: 'COURSE_NOT_FOUND',
+  },
+
+  // Lesson error
+  LESSON_NOT_FOUND: {
+    message: 'Lesson not found.',
+    code: 'LESSON_NOT_FOUND',
   },
 };

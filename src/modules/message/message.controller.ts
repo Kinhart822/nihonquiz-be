@@ -30,13 +30,13 @@ import {
   PinMessageDto,
   SendMessageDto,
   UnpinMessageDto,
-} from './dto/message.req.dto';
+} from './dtos/message.req.dto';
 
 import {
   MessageAttachmentResDto,
   MessagePinResDto,
   MessageResDto,
-} from './dto/message.res.dto';
+} from './dtos/message.res.dto';
 import { MessageService } from './message.service';
 
 @ApiTags('Message')
@@ -47,11 +47,7 @@ export class MessageController {
 
   // ==================== GET LIST ====================
   @Get('conversation/:id')
-  @ApiOperation({
-    summary: 'Get conversation messages',
-    description:
-      'Returns a paginated list of messages for a specific conversation.',
-  })
+  @ApiOperation({ summary: 'Get conversation messages' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: MessageResDto,
@@ -67,10 +63,7 @@ export class MessageController {
 
   // ==================== GET INFO ====================
   @Get(':id/info')
-  @ApiOperation({
-    summary: 'Get message by ID',
-    description: 'Returns message information for the specified message ID.',
-  })
+  @ApiOperation({ summary: 'Get message by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: MessageResDto,
@@ -81,11 +74,7 @@ export class MessageController {
   }
 
   @Get('conversation/:id/attachments')
-  @ApiOperation({
-    summary: 'Get conversation attachments',
-    description:
-      'Returns a paginated list of attachments for a specific conversation.',
-  })
+  @ApiOperation({ summary: 'Get conversation attachments' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: MessageAttachmentResDto,
@@ -99,11 +88,7 @@ export class MessageController {
   }
 
   @Get('conversation/:id/pins')
-  @ApiOperation({
-    summary: 'Get pinned messages',
-    description:
-      'Returns a list of pinned messages for a specific conversation.',
-  })
+  @ApiOperation({ summary: 'Get pinned messages' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: MessagePinResDto,
@@ -118,10 +103,7 @@ export class MessageController {
 
   // ==================== SEND ====================
   @Post('send')
-  @ApiOperation({
-    summary: 'Send a message',
-    description: 'Sends a new message with optional file attachments.',
-  })
+  @ApiOperation({ summary: 'Send a message' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: MessageResDto,

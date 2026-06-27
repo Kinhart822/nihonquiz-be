@@ -1,5 +1,5 @@
 import { Order } from '@constants/pagination.constant';
-import { AccountHistoryFilterDto } from '@modules/admin/dto/admin.req.dto';
+import { AccountHistoryFilterDto } from '@modules/admin/dtos/admin.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { AccountHistoryEntity } from '@entities/account-history.entity';
 import { BaseRepository } from './base.repository';

@@ -11,7 +11,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
-    private readonly userRepository: UserRepository,
+    private readonly userRepo: UserRepository,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayloadDto) {
-    const user = await this.userRepository.findOneBy({ id: payload.id });
+    const user = await this.userRepo.findOneBy({ id: payload.id });
     if (!user) {
       throw new HttpException(httpErrors.FORBIDDEN, HttpStatus.UNAUTHORIZED);
     }

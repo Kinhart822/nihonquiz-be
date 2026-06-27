@@ -32,15 +32,15 @@ jest.mock('bcrypt', () => ({
 
 describe('AdminService', () => {
   let service: AdminService;
-  let userRepository: jest.Mocked<UserRepository>;
-  let accountHistoryRepository: jest.Mocked<AccountHistoryRepository>;
-  let participantRepository: jest.Mocked<ParticipantRepository>;
-  let messageRepository: jest.Mocked<MessageRepository>;
+  let userRepo: jest.Mocked<UserRepository>;
+  let accountHistoryRepo: jest.Mocked<AccountHistoryRepository>;
+  let participantRepo: jest.Mocked<ParticipantRepository>;
+  let messageRepo: jest.Mocked<MessageRepository>;
   let socketEmitterService: jest.Mocked<SocketEmitterService>;
   let systemMessageQueue: any;
 
   beforeEach(async () => {
-    const mockUserRepository = {
+    const mockUserRepo = {
       findOne: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
@@ -50,18 +50,18 @@ describe('AdminService', () => {
       create: jest.fn(),
     };
 
-    const mockAccountHistoryRepository = {
+    const mockAccountHistoryRepo = {
       create: jest.fn(),
       save: jest.fn(),
       findOne: jest.fn(),
       getAccountHistoryListByFilter: jest.fn(),
     };
 
-    const mockParticipantRepository = {
+    const mockParticipantRepo = {
       update: jest.fn(),
     };
 
-    const mockMessageRepository = {
+    const mockMessageRepo = {
       count: jest.fn(),
     };
 
@@ -78,13 +78,13 @@ describe('AdminService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
-        { provide: UserRepository, useValue: mockUserRepository },
+        { provide: UserRepository, useValue: mockUserRepo },
         {
           provide: AccountHistoryRepository,
-          useValue: mockAccountHistoryRepository,
+          useValue: mockAccountHistoryRepo,
         },
-        { provide: ParticipantRepository, useValue: mockParticipantRepository },
-        { provide: MessageRepository, useValue: mockMessageRepository },
+        { provide: ParticipantRepository, useValue: mockParticipantRepo },
+        { provide: MessageRepository, useValue: mockMessageRepo },
         { provide: SocketEmitterService, useValue: mockSocketEmitterService },
         {
           provide: getQueueToken(SYSTEM_MESSAGE_QUEUE),
@@ -94,10 +94,10 @@ describe('AdminService', () => {
     }).compile();
 
     service = module.get<AdminService>(AdminService);
-    userRepository = module.get(UserRepository);
-    accountHistoryRepository = module.get(AccountHistoryRepository);
-    participantRepository = module.get(ParticipantRepository);
-    messageRepository = module.get(MessageRepository);
+    userRepo = module.get(UserRepository);
+    accountHistoryRepo = module.get(AccountHistoryRepository);
+    participantRepo = module.get(ParticipantRepository);
+    messageRepo = module.get(MessageRepository);
     socketEmitterService = module.get(SocketEmitterService);
     systemMessageQueue = module.get(getQueueToken(SYSTEM_MESSAGE_QUEUE));
   });
@@ -125,18 +125,18 @@ describe('AdminService', () => {
          * 4. Update participant status to BLOCKED in Participant table.
          * 5. Emit 'user.blocked' event via socket.
          */
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any) // admin
           .mockResolvedValueOnce({ ...mockUser } as any); // user
 
-        accountHistoryRepository.create.mockReturnValue({} as any);
+        accountHistoryRepo.create.mockReturnValue({} as any);
 
         await service.blockUser(1, 2, { reason: 'spam' });
 
-        expect(userRepository.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({ status: UserStatus.BLOCKED }),
         );
-        expect(participantRepository.update).toHaveBeenCalledWith(
+        expect(participantRepo.update).toHaveBeenCalledWith(
           { userId: 2 },
           { status: ParticipantStatus.BLOCKED },
         );
@@ -149,7 +149,7 @@ describe('AdminService', () => {
          * 1. Query DB for user and admin.
          * 2. If target user status is already BLOCKED, throw BadRequest exception.
          */
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({
             ...mockUser,
@@ -171,21 +171,21 @@ describe('AdminService', () => {
          * 3. Update User and Participant status to ACTIVE.
          * 4. Emit 'user.unblocked' socket event.
          */
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({
             ...mockUser,
             status: UserStatus.BLOCKED,
           } as any);
 
-        accountHistoryRepository.create.mockReturnValue({} as any);
+        accountHistoryRepo.create.mockReturnValue({} as any);
 
         await service.unblockUser(1, 2, { reason: 'apology' });
 
-        expect(userRepository.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({ status: UserStatus.ACTIVE }),
         );
-        expect(participantRepository.update).toHaveBeenCalledWith(
+        expect(participantRepo.update).toHaveBeenCalledWith(
           { userId: 2 },
           { status: ParticipantStatus.ACTIVE },
         );
@@ -198,7 +198,7 @@ describe('AdminService', () => {
          * 1. Fetch user status.
          * 2. If user is NOT blocked, throw BadRequest exception.
          */
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({ ...mockUser } as any);
 
@@ -218,18 +218,18 @@ describe('AdminService', () => {
          * 4. Update all participant records for this user to DELETED.
          * 5. Emit 'user.deleted' socket event to kick user out.
          */
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce({ ...mockAdmin } as any)
           .mockResolvedValueOnce({ ...mockUser } as any);
 
-        accountHistoryRepository.create.mockReturnValue({} as any);
+        accountHistoryRepo.create.mockReturnValue({} as any);
 
         await service.deleteUser(1, 2, { reason: 'spam' });
 
-        expect(userRepository.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({ status: UserStatus.DELETED }),
         );
-        expect(participantRepository.update).toHaveBeenCalledWith(
+        expect(participantRepo.update).toHaveBeenCalledWith(
           { userId: 2 },
           { status: ParticipantStatus.DELETED },
         );
@@ -246,7 +246,7 @@ describe('AdminService', () => {
          * 1. Look up user by email or username.
          * 2. If an account already exists, throw BadRequest exception.
          */
-        userRepository.findOne.mockResolvedValue({ id: 1 } as any);
+        userRepo.findOne.mockResolvedValue({ id: 1 } as any);
         await expect(
           service.createAdmin({
             email: 'test@test.com',
@@ -263,12 +263,12 @@ describe('AdminService', () => {
          * 2. Hash password and create User entity with role ADMIN.
          * 3. Save to database.
          */
-        userRepository.findOne.mockResolvedValue(null);
-        userRepository.create.mockReturnValue({
+        userRepo.findOne.mockResolvedValue(null);
+        userRepo.create.mockReturnValue({
           id: 1,
           role: RoleUser.ADMIN,
         } as any);
-        userRepository.save.mockResolvedValue({
+        userRepo.save.mockResolvedValue({
           id: 1,
           role: RoleUser.ADMIN,
         } as any);
@@ -279,7 +279,7 @@ describe('AdminService', () => {
           password: 'pw',
         });
 
-        expect(userRepository.save).toHaveBeenCalled();
+        expect(userRepo.save).toHaveBeenCalled();
         expect(result.id).toBe(1);
       });
     });
@@ -298,14 +298,14 @@ describe('AdminService', () => {
           username: 'old',
           email: 'old@test.com',
         };
-        userRepository.findOne
+        userRepo.findOne
           .mockResolvedValueOnce(mockAdmin as any)
           .mockResolvedValueOnce(null);
-        userRepository.save.mockResolvedValue(mockAdmin as any);
+        userRepo.save.mockResolvedValue(mockAdmin as any);
 
         await service.updateAdmin(1, { username: 'new' });
 
-        expect(userRepository.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({ username: 'new' }),
         );
       });
@@ -323,12 +323,12 @@ describe('AdminService', () => {
          * 4. Count total messages across system.
          * 5. Return aggregated stats object.
          */
-        userRepository.findOne.mockResolvedValue({
+        userRepo.findOne.mockResolvedValue({
           id: 1,
           role: RoleUser.ADMIN,
         } as any);
-        userRepository.count.mockResolvedValueOnce(10).mockResolvedValueOnce(5);
-        messageRepository.count.mockResolvedValue(100);
+        userRepo.count.mockResolvedValueOnce(10).mockResolvedValueOnce(5);
+        messageRepo.count.mockResolvedValue(100);
 
         const result = await service.getAdminDashboardStats(1);
         expect(result.totalStudents).toBe(10);
@@ -345,7 +345,7 @@ describe('AdminService', () => {
          * 2. Add broadcast job to BullMQ SystemMessageQueue.
          * 3. Background worker will process and deliver to all users.
          */
-        userRepository.findOne.mockResolvedValue({
+        userRepo.findOne.mockResolvedValue({
           id: 1,
           role: RoleUser.ADMIN,
         } as any);

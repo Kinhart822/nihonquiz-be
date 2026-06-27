@@ -1,5 +1,5 @@
 import { RoleUser } from '@constants/user.constant';
-import { UserResDto } from '@modules/user/dto/user.res.dto';
+import { UserResDto } from '@modules/user/dtos/user.res.dto';
 import {
   Body,
   Controller,
@@ -29,13 +29,10 @@ import {
   ActionDto,
   AdminFilterDto,
   CreateAdminDto,
-  SystemNotificationDto,
   EditAdminDto,
-} from './dto/admin.req.dto';
-import {
-  AccountHistoryResDto,
-  AdminDashboardResDto,
-} from './dto/admin.res.dto';
+  SystemNotificationDto,
+} from './dtos/admin.req.dto';
+import { AccountHistoryResDto } from './dtos/admin.res.dto';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -50,10 +47,7 @@ export class AdminController {
   // ==================== ACCOUNT HISTORY ====================
 
   @Get('account-history')
-  @ApiOperation({
-    summary: 'Get list of account history',
-    description: 'Returns list of account history',
-  })
+  @ApiOperation({ summary: 'Get list of account history' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of account history returned successfully',
@@ -65,10 +59,7 @@ export class AdminController {
   }
 
   @Get('account-history/:id')
-  @ApiOperation({
-    summary: 'Get account history info',
-    description: 'Returns account history info for the specified ID.',
-  })
+  @ApiOperation({ summary: 'Get account history info' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: AccountHistoryResDto,
@@ -83,10 +74,7 @@ export class AdminController {
   // ==================== AUDIT LOGS ====================
 
   @Get('audit-log')
-  @ApiOperation({
-    summary: 'Get list of audit logs',
-    description: 'Returns list of audit logs',
-  })
+  @ApiOperation({ summary: 'Get list of audit logs' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of audit logs returned successfully',
@@ -98,10 +86,7 @@ export class AdminController {
   }
 
   @Get('audit-log/:id')
-  @ApiOperation({
-    summary: 'Get audit log info',
-    description: 'Returns audit log info for the specified ID.',
-  })
+  @ApiOperation({ summary: 'Get audit log info' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: AuditLogResDto,
@@ -114,10 +99,7 @@ export class AdminController {
   // ==================== USER MANAGEMENT ====================
 
   @Post('user/:userId/block')
-  @ApiOperation({
-    summary: 'Block a user',
-    description: 'Blocks a user account',
-  })
+  @ApiOperation({ summary: 'Block a user' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User blocked successfully',
@@ -131,10 +113,7 @@ export class AdminController {
   }
 
   @Post('user/:userId/unblock')
-  @ApiOperation({
-    summary: 'Unblock a user',
-    description: 'Unblocks a user account',
-  })
+  @ApiOperation({ summary: 'Unblock a user' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User unblocked successfully',
@@ -148,10 +127,7 @@ export class AdminController {
   }
 
   @Delete('user/:userId')
-  @ApiOperation({
-    summary: 'Delete a user',
-    description: 'Deletes a user account',
-  })
+  @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User deleted successfully',
@@ -167,10 +143,7 @@ export class AdminController {
   // ==================== ADMIN MANAGEMENT ====================
 
   @Get('account')
-  @ApiOperation({
-    summary: 'Get list of admin accounts',
-    description: 'Returns list of admin accounts',
-  })
+  @ApiOperation({ summary: 'Get list of admin accounts' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of admin accounts returned successfully',
@@ -180,10 +153,7 @@ export class AdminController {
   }
 
   @Get('account/:id')
-  @ApiOperation({
-    summary: 'Get admin account info',
-    description: 'Returns admin account info for the specified ID.',
-  })
+  @ApiOperation({ summary: 'Get admin account info' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: UserResDto,
@@ -194,10 +164,7 @@ export class AdminController {
   }
 
   @Post('account')
-  @ApiOperation({
-    summary: 'Create a new admin account',
-    description: 'Creates a new admin account',
-  })
+  @ApiOperation({ summary: 'Create a new admin account' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: UserResDto,
@@ -208,10 +175,7 @@ export class AdminController {
   }
 
   @Patch('account/:id')
-  @ApiOperation({
-    summary: 'Update an admin account',
-    description: 'Updates an admin account',
-  })
+  @ApiOperation({ summary: 'Update an admin account' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: UserResDto,
@@ -222,10 +186,7 @@ export class AdminController {
   }
 
   @Delete('account/:id')
-  @ApiOperation({
-    summary: 'Delete an admin account',
-    description: 'Deletes an admin account',
-  })
+  @ApiOperation({ summary: 'Delete an admin account' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Admin account deleted successfully',
@@ -234,24 +195,9 @@ export class AdminController {
     return this.adminService.deleteAdmin(+id);
   }
 
-  // ==================== DASHBOARD & NOTIFICATIONS ====================
-
-  @Get('dashboard')
-  @ApiOperation({ summary: 'Get dashboard statistics' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    type: AdminDashboardResDto,
-    description: 'Dashboard statistics returned successfully',
-  })
-  async getDashboardStats(@AuthUser() admin: JwtPayloadDto) {
-    return this.adminService.getAdminDashboardStats(admin.id);
-  }
-
+  // ==================== NOTIFICATIONS ====================
   @Post('notification')
-  @ApiOperation({
-    summary: 'Send system notification',
-    description: 'Sends a message with type SYSTEM to all active users.',
-  })
+  @ApiOperation({ summary: 'Send system notification' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'System notification sent successfully',

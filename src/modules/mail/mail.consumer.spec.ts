@@ -12,7 +12,7 @@ describe('MailConsumer', () => {
   let consumer: MailConsumer;
   let mailService: jest.Mocked<MailService>;
   let configService: jest.Mocked<ConfigService>;
-  let emailLogRepository: jest.Mocked<EmailLogRepository>;
+  let emailLogRepo: jest.Mocked<EmailLogRepository>;
 
   const mockMailService = {
     sendSignUpEmail: jest.fn(),
@@ -24,7 +24,7 @@ describe('MailConsumer', () => {
     get: jest.fn().mockReturnValue('noreply@test.com'),
   };
 
-  const mockEmailLogRepository = {
+  const mockEmailLogRepo = {
     save: jest.fn(),
   };
 
@@ -35,14 +35,14 @@ describe('MailConsumer', () => {
         MailConsumer,
         { provide: MailService, useValue: mockMailService },
         { provide: ConfigService, useValue: mockConfigService },
-        { provide: EmailLogRepository, useValue: mockEmailLogRepository },
+        { provide: EmailLogRepository, useValue: mockEmailLogRepo },
       ],
     }).compile();
 
     consumer = module.get<MailConsumer>(MailConsumer);
     mailService = module.get(MailService);
     configService = module.get(ConfigService);
-    emailLogRepository = module.get(EmailLogRepository);
+    emailLogRepo = module.get(EmailLogRepository);
   });
 
   afterEach(() => {
@@ -69,7 +69,7 @@ describe('MailConsumer', () => {
         job.data.email,
         job.data.token,
       );
-      expect(emailLogRepository.save).toHaveBeenCalledWith(
+      expect(emailLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'SUCCESS',
           type: IMailType.SIGN_UP,
@@ -91,7 +91,7 @@ describe('MailConsumer', () => {
         job.data.email,
         job.data.token,
       );
-      expect(emailLogRepository.save).toHaveBeenCalledWith(
+      expect(emailLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'SUCCESS',
           type: IMailType.RESEND_EMAIL,
@@ -112,7 +112,7 @@ describe('MailConsumer', () => {
         job.data.email,
         job.data.token,
       );
-      expect(emailLogRepository.save).toHaveBeenCalledWith(
+      expect(emailLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'SUCCESS',
           type: IMailType.FORGOT_PASSWORD,
@@ -128,7 +128,7 @@ describe('MailConsumer', () => {
 
       // Act & Assert
       await expect(consumer.process(job)).rejects.toThrow(error);
-      expect(emailLogRepository.save).toHaveBeenCalledWith(
+      expect(emailLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'FAILED',
           error: 'SMTP Error',
@@ -145,7 +145,7 @@ describe('MailConsumer', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(emailLogRepository.save).not.toHaveBeenCalled();
+      expect(emailLogRepo.save).not.toHaveBeenCalled();
     });
   });
 });

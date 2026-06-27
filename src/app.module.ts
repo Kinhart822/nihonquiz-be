@@ -10,7 +10,11 @@ import { InterceptorsModule } from './interceptors/interceptor.module';
 import { LoggerHttpRequestMiddleware } from './middleware/logger.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { GuardModule } from './modules/auth/guards/guard.module';
+import { ClassModule } from './modules/class/class.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { CourseModule } from './modules/course/course.module';
+import { LessonModule } from './modules/lesson/lesson.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { PipeModule } from './pipes/pipe.module';
 
@@ -42,6 +46,10 @@ import { PipeModule } from './pipes/pipe.module';
       }),
     }),
     CloudinaryModule,
+    ClassModule,
+    CourseModule,
+    LessonModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

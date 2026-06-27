@@ -11,16 +11,14 @@ import { AuditLogResDto } from './dtos/audit-log.res.dto';
 export class AuditLogService {
   private readonly logger = new Logger(AuditLogService.name);
 
-  constructor(private readonly auditLogRepository: AuditLogRepository) {}
+  constructor(private readonly auditLogRepo: AuditLogRepository) {}
 
-  /**
-   * Get paginated list of audit logs
-   */
+  // ==================== GET LIST ====================
   async getAuditLogs(
     filterDto: AuditLogFilterDto,
   ): Promise<PageDto<AuditLogResDto>> {
     const { entities, total } =
-      await this.auditLogRepository.getAuditLogsWithFilters(filterDto);
+      await this.auditLogRepo.getAuditLogsWithFilters(filterDto);
 
     const mappedItems = entities.map((auditLog) => {
       return plainToInstance(AuditLogResDto, auditLog, {
@@ -32,11 +30,9 @@ export class AuditLogService {
     return new PageDto(mappedItems, meta);
   }
 
-  /**
-   * Get audit log info by ID
-   */
+  // ==================== GET INFO ====================
   async getAuditLogInfo(id: number): Promise<AuditLogResDto> {
-    const log = await this.auditLogRepository.findOne({ where: { id } });
+    const log = await this.auditLogRepo.findOne({ where: { id } });
     if (!log) {
       throw new httpNotFound(
         httpErrors.AUDIT_LOG_NOT_FOUND.message,
@@ -49,13 +45,11 @@ export class AuditLogService {
     });
   }
 
-  /**
-   * Create new audit log
-   */
+  // ==================== CREATE ====================
   async createAuditLog(payload: CreateAuditLogDto) {
     try {
-      const log = this.auditLogRepository.create(payload as any);
-      return await this.auditLogRepository.save(log);
+      const log = this.auditLogRepo.create(payload as any);
+      return await this.auditLogRepo.save(log);
     } catch (err) {
       this.logger.error('Failed to save audit log', (err as Error).stack);
       return null;

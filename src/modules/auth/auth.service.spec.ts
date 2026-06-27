@@ -23,13 +23,13 @@ jest.mock('bcrypt', () => ({
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: jest.Mocked<UserRepository>;
+  let userRepo: jest.Mocked<UserRepository>;
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
   let mailService: jest.Mocked<MailService>;
   let redisService: jest.Mocked<RedisService>;
 
-  const mockUserRepository = {
+  const mockUserRepo = {
     findOneBy: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -62,7 +62,7 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: UserRepository, useValue: mockUserRepository },
+        { provide: UserRepository, useValue: mockUserRepo },
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: MailService, useValue: mockMailService },
@@ -71,7 +71,7 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userRepository = module.get(UserRepository);
+    userRepo = module.get(UserRepository);
     jwtService = module.get(JwtService);
     configService = module.get(ConfigService);
     mailService = module.get(MailService);
@@ -90,7 +90,7 @@ describe('AuthService', () => {
     };
 
     it('should throw error if email already exists', async () => {
-      userRepository.findOneBy.mockResolvedValue({ id: 1 } as any);
+      userRepo.findOneBy.mockResolvedValue({ id: 1 } as any);
 
       await expect(service.register(dto)).rejects.toThrow(HttpException);
       await expect(service.register(dto)).rejects.toMatchObject({
@@ -99,7 +99,7 @@ describe('AuthService', () => {
     });
 
     it('should throw error if username already exists', async () => {
-      userRepository.findOneBy.mockImplementation(async (query: any) => {
+      userRepo.findOneBy.mockImplementation(async (query: any) => {
         if (query.username) return { id: 1 } as any;
         return null;
       });
@@ -111,7 +111,7 @@ describe('AuthService', () => {
     });
 
     it('should successfully register user, hash password, save to redis and send OTP', async () => {
-      userRepository.findOneBy.mockResolvedValue(null);
+      userRepo.findOneBy.mockResolvedValue(null);
       mailService.isOTPExist.mockResolvedValue(false);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_pw');
 
@@ -151,8 +151,8 @@ describe('AuthService', () => {
         username: 'testuser',
         password: 'pw',
       });
-      userRepository.create.mockReturnValue({ id: 1, email } as any);
-      userRepository.save.mockResolvedValue({ id: 1, email } as any);
+      userRepo.create.mockReturnValue({ id: 1, email } as any);
+      userRepo.save.mockResolvedValue({ id: 1, email } as any);
 
       const result = await service.verifyOtpAndExecuteAction(
         email,
@@ -160,8 +160,8 @@ describe('AuthService', () => {
         IMailType.SIGN_UP,
       );
 
-      expect(userRepository.create).toHaveBeenCalled();
-      expect(userRepository.save).toHaveBeenCalled();
+      expect(userRepo.create).toHaveBeenCalled();
+      expect(userRepo.save).toHaveBeenCalled();
       expect(redisService.del).toHaveBeenCalled();
       expect(result.user).toBeDefined();
     });
@@ -171,7 +171,7 @@ describe('AuthService', () => {
     const dto = { email: 'test@example.com', password: 'password123' };
 
     it('should throw error if user not found', async () => {
-      userRepository.findOneBy.mockResolvedValue(null);
+      userRepo.findOneBy.mockResolvedValue(null);
 
       await expect(service.signIn(dto)).rejects.toThrow(HttpException);
       await expect(service.signIn(dto)).rejects.toMatchObject({
@@ -180,7 +180,7 @@ describe('AuthService', () => {
     });
 
     it('should throw error if password does not match', async () => {
-      userRepository.findOneBy.mockResolvedValue({
+      userRepo.findOneBy.mockResolvedValue({
         email: dto.email,
         password: 'hashed',
         accessMethod: AccessMethod.EMAIL,
@@ -201,7 +201,7 @@ describe('AuthService', () => {
         status: UserStatus.ACTIVE,
         accessMethod: AccessMethod.EMAIL,
       };
-      userRepository.findOneBy.mockResolvedValue(user as any);
+      userRepo.findOneBy.mockResolvedValue(user as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       configService.getOrThrow.mockImplementation((key) => {
         if (key === EnvKey.JWT_REFRESH_TOKEN_EXPIRE) return '7d';
@@ -224,12 +224,12 @@ describe('AuthService', () => {
 
     it('should create new user if google user not found and login', async () => {
       const req = { user: { email: 'g@example.com', googleId: '123' } };
-      userRepository.findOneBy.mockResolvedValue(null);
-      userRepository.create.mockReturnValue({
+      userRepo.findOneBy.mockResolvedValue(null);
+      userRepo.create.mockReturnValue({
         id: 1,
         email: 'g@example.com',
       } as any);
-      userRepository.save.mockResolvedValue({
+      userRepo.save.mockResolvedValue({
         id: 1,
         email: 'g@example.com',
       } as any);
@@ -241,7 +241,7 @@ describe('AuthService', () => {
       jwtService.signAsync.mockResolvedValue('token');
 
       const result = await service.googleLogin(req);
-      expect(userRepository.create).toHaveBeenCalledWith(
+      expect(userRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ googleId: '123' }),
       );
       expect(result?.accessToken).toBe('token');
@@ -250,14 +250,14 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it('should throw error if user not found', async () => {
-      userRepository.findOneBy.mockResolvedValue(null);
+      userRepo.findOneBy.mockResolvedValue(null);
       await expect(
         service.forgotPassword({ email: 'x@ex.com' }),
       ).rejects.toThrow(HttpException);
     });
 
     it('should generate and send OTP', async () => {
-      userRepository.findOneBy.mockResolvedValue({
+      userRepo.findOneBy.mockResolvedValue({
         id: 1,
         status: UserStatus.ACTIVE,
       } as any);
@@ -275,7 +275,7 @@ describe('AuthService', () => {
   describe('resetPassword', () => {
     it('should reset password if OTP is valid', async () => {
       mailService.verifyOTP.mockResolvedValue(true);
-      userRepository.findOneBy.mockResolvedValue({
+      userRepo.findOneBy.mockResolvedValue({
         id: 1,
         email: 'x@ex.com',
       } as any);
@@ -287,7 +287,7 @@ describe('AuthService', () => {
         password: 'new',
       });
 
-      expect(userRepository.update).toHaveBeenCalledWith(1, {
+      expect(userRepo.update).toHaveBeenCalledWith(1, {
         password: 'new_hash',
       });
       expect(mailService.clearOTP).toHaveBeenCalled();

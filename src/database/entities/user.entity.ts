@@ -1,5 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { ParticipantEntity } from './participant.entity';
+import { ClassEntity } from './class.entity';
+import { ClassStudentEntity } from './class-student.entity';
 import {
   AccessMethod,
   RoleUser,
@@ -51,4 +53,13 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => ParticipantEntity, (participant) => participant.user)
   participants!: ParticipantEntity[];
+
+  @OneToMany(() => ClassEntity, (classObj: ClassEntity) => classObj.teacher)
+  classesTaught!: ClassEntity[];
+
+  @OneToMany(
+    () => ClassStudentEntity,
+    (classStudent: ClassStudentEntity) => classStudent.student,
+  )
+  classesEnrolled!: ClassStudentEntity[];
 }

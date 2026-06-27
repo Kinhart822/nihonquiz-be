@@ -5,7 +5,7 @@ import {
   CreateConfigRequestDto,
   SystemConfigFilterDto,
   UpdateConfigRequestDto,
-} from './dto/system-config.req.dto';
+} from './dtos/system-config.req.dto';
 import { AuditLogInterceptor } from '../../interceptors/audit-log.interceptor';
 
 describe('SystemConfigController', () => {

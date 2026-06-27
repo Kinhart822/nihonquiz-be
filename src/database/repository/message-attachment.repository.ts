@@ -1,5 +1,5 @@
 import { MessageAttachmentEntity } from '@entities/message-attachment.entity';
-import { MessageAttachmentFilterDto } from '@modules/message/dto/message.req.dto';
+import { MessageAttachmentFilterDto } from '@modules/message/dtos/message.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { normalizeDate } from '@utils/date';
 import { BaseRepository } from './base.repository';

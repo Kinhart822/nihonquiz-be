@@ -10,7 +10,7 @@ describe('AuditLogService', () => {
   let service: AuditLogService;
   let repository: jest.Mocked<AuditLogRepository>;
 
-  const mockAuditLogRepository = {
+  const mockAuditLogRepo = {
     getAuditLogsWithFilters: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
@@ -24,7 +24,7 @@ describe('AuditLogService', () => {
         AuditLogService,
         {
           provide: AuditLogRepository,
-          useValue: mockAuditLogRepository,
+          useValue: mockAuditLogRepo,
         },
       ],
     }).compile();

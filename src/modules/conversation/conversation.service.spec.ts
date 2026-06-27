@@ -26,14 +26,14 @@ jest.mock('typeorm-transactional', () => ({
 
 describe('ConversationService', () => {
   let service: ConversationService;
-  let conversationRepository: jest.Mocked<ConversationRepository>;
-  let userRepository: jest.Mocked<UserRepository>;
-  let participantRepository: jest.Mocked<ParticipantRepository>;
+  let conversationRepo: jest.Mocked<ConversationRepository>;
+  let userRepo: jest.Mocked<UserRepository>;
+  let participantRepo: jest.Mocked<ParticipantRepository>;
   let socketEmitterService: jest.Mocked<SocketEmitterService>;
   let fileUploadQueue: any;
 
   beforeEach(async () => {
-    const mockConversationRepository = {
+    const mockConversationRepo = {
       findOne: jest.fn(),
       findOneBy: jest.fn(),
       create: jest.fn(),
@@ -42,12 +42,12 @@ describe('ConversationService', () => {
       createQueryBuilder: jest.fn(),
     };
 
-    const mockUserRepository = {
+    const mockUserRepo = {
       findOne: jest.fn(),
       find: jest.fn(),
     };
 
-    const mockParticipantRepository = {
+    const mockParticipantRepo = {
       findOne: jest.fn(),
       find: jest.fn(),
       create: jest.fn(),
@@ -81,10 +81,10 @@ describe('ConversationService', () => {
         ConversationService,
         {
           provide: ConversationRepository,
-          useValue: mockConversationRepository,
+          useValue: mockConversationRepo,
         },
-        { provide: UserRepository, useValue: mockUserRepository },
-        { provide: ParticipantRepository, useValue: mockParticipantRepository },
+        { provide: UserRepository, useValue: mockUserRepo },
+        { provide: ParticipantRepository, useValue: mockParticipantRepo },
         { provide: SocketEmitterService, useValue: mockSocketEmitterService },
         { provide: RedisService, useValue: mockRedisService },
         {
@@ -95,9 +95,9 @@ describe('ConversationService', () => {
     }).compile();
 
     service = module.get<ConversationService>(ConversationService);
-    conversationRepository = module.get(ConversationRepository);
-    userRepository = module.get(UserRepository);
-    participantRepository = module.get(ParticipantRepository);
+    conversationRepo = module.get(ConversationRepository);
+    userRepo = module.get(UserRepository);
+    participantRepo = module.get(ParticipantRepository);
     socketEmitterService = module.get(SocketEmitterService);
     fileUploadQueue = module.get(getQueueToken(FILE_UPLOAD_QUEUE));
   });
@@ -115,7 +115,7 @@ describe('ConversationService', () => {
        * 1. Query DB for the creator's user status.
        * 2. If status is BLOCKED, throw Forbidden exception.
        */
-      userRepository.findOne.mockResolvedValueOnce({
+      userRepo.findOne.mockResolvedValueOnce({
         status: UserStatus.BLOCKED,
       } as any);
       await expect(
@@ -134,13 +134,13 @@ describe('ConversationService', () => {
        * 2. Validate participant array.
        * 3. If type is DIRECT and multiple participants exist, throw BadRequest.
        */
-      userRepository.findOne.mockResolvedValueOnce(mockUser as any);
+      userRepo.findOne.mockResolvedValueOnce(mockUser as any);
       const dto = {
         participants: [2, 3],
         type: ConversationType.DIRECT,
         name: '',
       };
-      userRepository.find.mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any);
+      userRepo.find.mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any);
 
       await expect(service.createConversation(1, dto)).rejects.toThrow(
         httpBadRequest,
@@ -155,14 +155,14 @@ describe('ConversationService', () => {
        * 3. Query DB to check if a DIRECT conversation between these 2 users already exists.
        * 4. If it exists, throw BadRequest.
        */
-      userRepository.findOne.mockResolvedValueOnce(mockUser as any);
-      userRepository.find.mockResolvedValueOnce([{ id: 2 }] as any);
+      userRepo.findOne.mockResolvedValueOnce(mockUser as any);
+      userRepo.find.mockResolvedValueOnce([{ id: 2 }] as any);
       const mockQueryBuilder = {
         innerJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockResolvedValue({ id: 5 }), // Exists
       };
-      conversationRepository.createQueryBuilder.mockReturnValue(
+      conversationRepo.createQueryBuilder.mockReturnValue(
         mockQueryBuilder as any,
       );
 
@@ -184,22 +184,22 @@ describe('ConversationService', () => {
        * 4. Add creator and other users as Participants to the conversation.
        * 5. Emit 'conversation.create' socket event to all members.
        */
-      userRepository.findOne.mockResolvedValueOnce(mockUser as any);
-      userRepository.find.mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any);
+      userRepo.findOne.mockResolvedValueOnce(mockUser as any);
+      userRepo.find.mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any);
       const dto = {
         participants: [2, 3],
         type: ConversationType.GROUP,
         name: 'Test Group',
       };
       const createdConv = { id: 1, type: ConversationType.GROUP, ownerId: 1 };
-      conversationRepository.create.mockReturnValue(createdConv as any);
-      conversationRepository.save.mockResolvedValue(createdConv as any);
-      participantRepository.create.mockReturnValue({} as any);
+      conversationRepo.create.mockReturnValue(createdConv as any);
+      conversationRepo.save.mockResolvedValue(createdConv as any);
+      participantRepo.create.mockReturnValue({} as any);
 
       const result = await service.createConversation(1, dto);
 
-      expect(conversationRepository.save).toHaveBeenCalled();
-      expect(participantRepository.save).toHaveBeenCalled();
+      expect(conversationRepo.save).toHaveBeenCalled();
+      expect(participantRepo.save).toHaveBeenCalled();
       expect(socketEmitterService.emitCreateConversation).toHaveBeenCalled();
       expect(result).toEqual(createdConv);
     });
@@ -221,15 +221,15 @@ describe('ConversationService', () => {
         status: ParticipantStatus.ACTIVE,
       };
 
-      conversationRepository.findOneBy.mockResolvedValue(mockConv as any);
-      participantRepository.findOne.mockResolvedValue({
+      conversationRepo.findOneBy.mockResolvedValue(mockConv as any);
+      participantRepo.findOne.mockResolvedValue({
         ...mockParticipant,
         user: {},
       } as any);
 
       await service.editConversation(1, 1, { name: 'New Name' });
 
-      expect(conversationRepository.save).toHaveBeenCalledWith(
+      expect(conversationRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'New Name' }),
       );
       expect(socketEmitterService.emitEditConversation).toHaveBeenCalled();
@@ -252,12 +252,12 @@ describe('ConversationService', () => {
         user: { email: 'test@test.com' },
       };
 
-      conversationRepository.findOneBy.mockResolvedValue(mockConv as any);
-      participantRepository.findOne.mockResolvedValue(mockParticipant as any);
+      conversationRepo.findOneBy.mockResolvedValue(mockConv as any);
+      participantRepo.findOne.mockResolvedValue(mockParticipant as any);
 
       await service.archiveConversation(1, 1);
 
-      expect(participantRepository.save).toHaveBeenCalledWith(
+      expect(participantRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ status: ParticipantStatus.ARCHIVED }),
       );
       expect(socketEmitterService.emitArchiveConversation).toHaveBeenCalled();
@@ -282,18 +282,18 @@ describe('ConversationService', () => {
         user: {},
       };
 
-      conversationRepository.findOneBy.mockResolvedValue(mockConv as any);
-      participantRepository.findOne.mockResolvedValue(mockOwner as any);
+      conversationRepo.findOneBy.mockResolvedValue(mockConv as any);
+      participantRepo.findOne.mockResolvedValue(mockOwner as any);
 
-      userRepository.find.mockResolvedValue([
+      userRepo.find.mockResolvedValue([
         { id: 2, status: UserStatus.ACTIVE },
       ] as any);
-      participantRepository.find.mockResolvedValue([]); // No existing participant
+      participantRepo.find.mockResolvedValue([]); // No existing participant
 
       await service.addMemberToGroup(1, 1, { userIds: [2] });
 
-      expect(participantRepository.create).toHaveBeenCalled();
-      expect(participantRepository.save).toHaveBeenCalled();
+      expect(participantRepo.create).toHaveBeenCalled();
+      expect(participantRepo.save).toHaveBeenCalled();
     });
   });
 });

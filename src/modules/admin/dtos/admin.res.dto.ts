@@ -37,23 +37,3 @@ export class AccountHistoryResDto {
   @Expose()
   type!: string;
 }
-
-export class AdminDashboardResDto {
-  @ApiProperty()
-  totalStudents!: number;
-
-  @ApiProperty()
-  totalTeachers!: number;
-
-  // @ApiProperty()
-  // totalCourses!: number;
-
-  // @ApiProperty()
-  // totalClasses!: number;
-
-  // @ApiProperty()
-  // totalLessons!: number;
-
-  @ApiProperty()
-  totalMessages!: number;
-}

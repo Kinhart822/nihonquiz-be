@@ -19,10 +19,10 @@ export class FileUploadProcessor extends WorkerHost {
 
   constructor(
     private readonly cloudinaryService: CloudinaryService,
-    private readonly messageAttachmentRepository: MessageAttachmentRepository,
-    private readonly messageRepository: MessageRepository,
-    private readonly conversationRepository: ConversationRepository,
-    private readonly userRepository: UserRepository,
+    private readonly messageAttachmentRepo: MessageAttachmentRepository,
+    private readonly messageRepo: MessageRepository,
+    private readonly conversationRepo: ConversationRepository,
+    private readonly userRepo: UserRepository,
     private readonly socketEmitterService: SocketEmitterService,
   ) {
     super();
@@ -56,7 +56,7 @@ export class FileUploadProcessor extends WorkerHost {
       const res = await this.cloudinaryService.uploadFile(multerFile);
       const avatarUrl = (res as any).secure_url;
 
-      await this.conversationRepository.update(conversationId, {
+      await this.conversationRepo.update(conversationId, {
         avatarUrl,
       });
 
@@ -94,13 +94,13 @@ export class FileUploadProcessor extends WorkerHost {
       const res = await this.cloudinaryService.uploadFile(multerFile);
       const avatarUrl = (res as any).secure_url;
 
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userRepo.findOne({ where: { id: userId } });
       if (!user) {
         this.logger.warn(`User ${userId} not found for avatar upload`);
         return;
       }
 
-      await this.userRepository.update(userId, { avatarUrl });
+      await this.userRepo.update(userId, { avatarUrl });
 
       this.socketEmitterService.emitUserProfileUpdate(user.email, {
         userId,
@@ -114,7 +114,7 @@ export class FileUploadProcessor extends WorkerHost {
         error.stack,
       );
 
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userRepo.findOne({ where: { id: userId } });
       if (user) {
         this.socketEmitterService.emitUserProfileUpdate(user.email, {
           userId,
@@ -138,13 +138,13 @@ export class FileUploadProcessor extends WorkerHost {
       const res = await this.cloudinaryService.uploadFile(multerFile);
       const backgroundUrl = (res as any).secure_url;
 
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userRepo.findOne({ where: { id: userId } });
       if (!user) {
         this.logger.warn(`User ${userId} not found for background upload`);
         return;
       }
 
-      await this.userRepository.update(userId, { backgroundUrl });
+      await this.userRepo.update(userId, { backgroundUrl });
 
       this.socketEmitterService.emitUserProfileUpdate(user.email, {
         userId,
@@ -158,7 +158,7 @@ export class FileUploadProcessor extends WorkerHost {
         error.stack,
       );
 
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userRepo.findOne({ where: { id: userId } });
       if (user) {
         this.socketEmitterService.emitUserProfileUpdate(user.email, {
           userId,
@@ -194,10 +194,10 @@ export class FileUploadProcessor extends WorkerHost {
         mimeType: (res as any).resource_type + '/' + (res as any).format,
       };
 
-      await this.messageAttachmentRepository.update(attachmentId, updateData);
+      await this.messageAttachmentRepo.update(attachmentId, updateData);
 
       // Verify message status
-      await this.messageRepository.update(messageId, {
+      await this.messageRepo.update(messageId, {
         status: MessageStatus.SENT,
       });
 
@@ -217,7 +217,7 @@ export class FileUploadProcessor extends WorkerHost {
         error.stack,
       );
 
-      await this.messageAttachmentRepository.update(attachmentId, {
+      await this.messageAttachmentRepo.update(attachmentId, {
         status: MessageAttachmentStatus.FAILED,
       });
 

@@ -27,10 +27,10 @@ export class SystemMessageProcessor extends WorkerHost {
   private readonly logger = new Logger(SystemMessageProcessor.name);
 
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly conversationRepository: ConversationRepository,
-    private readonly participantRepository: ParticipantRepository,
-    private readonly messageRepository: MessageRepository,
+    private readonly userRepo: UserRepository,
+    private readonly conversationRepo: ConversationRepository,
+    private readonly participantRepo: ParticipantRepository,
+    private readonly messageRepo: MessageRepository,
     private readonly socketEmitterService: SocketEmitterService,
   ) {
     super();
@@ -50,7 +50,7 @@ export class SystemMessageProcessor extends WorkerHost {
     this.logger.log(`Starting system broadcast from admin ${adminId}`);
 
     // Get all active users
-    const users = await this.userRepository.find({
+    const users = await this.userRepo.find({
       where: {
         role: In([RoleUser.STUDENT, RoleUser.TEACHER]),
         status: UserStatus.ACTIVE,
@@ -68,7 +68,7 @@ export class SystemMessageProcessor extends WorkerHost {
 
       try {
         // 1. Find existing direct conversations between Admin and Users
-        const existingConversations = await this.conversationRepository
+        const existingConversations = await this.conversationRepo
           .createQueryBuilder('c')
           .innerJoin('c.participants', 'p_admin', 'p_admin.userId = :adminId', {
             adminId,
@@ -94,27 +94,27 @@ export class SystemMessageProcessor extends WorkerHost {
         // 2. Bulk create missing conversations
         if (missingUserIds.length > 0) {
           const newConvs = missingUserIds.map(() =>
-            this.conversationRepository.create({
+            this.conversationRepo.create({
               type: ConversationType.DIRECT,
               ownerId: adminId,
               status: ConversationStatus.ACTIVE,
             }),
           );
-          const savedConvs = await this.conversationRepository.save(newConvs);
+          const savedConvs = await this.conversationRepo.save(newConvs);
 
           // 3. Bulk create participants for new conversations
           const newParticipants: any[] = [];
           savedConvs.forEach((conv, index) => {
             const userId = missingUserIds[index];
             newParticipants.push(
-              this.participantRepository.create({
+              this.participantRepo.create({
                 conversationId: conv.id,
                 userId: adminId,
                 role: ParticipantRole.OWNER,
                 status: ParticipantStatus.ACTIVE,
                 joinedAt: new Date(),
               }),
-              this.participantRepository.create({
+              this.participantRepo.create({
                 conversationId: conv.id,
                 userId: userId,
                 role: ParticipantRole.MEMBER,
@@ -123,7 +123,7 @@ export class SystemMessageProcessor extends WorkerHost {
               }),
             );
           });
-          await this.participantRepository.save(newParticipants);
+          await this.participantRepo.save(newParticipants);
 
           allConversations = [...allConversations, ...savedConvs];
         }
@@ -131,7 +131,7 @@ export class SystemMessageProcessor extends WorkerHost {
         const allConvIds = allConversations.map((c) => c.id);
 
         // 4. Get Admin Participant IDs for all conversations
-        const adminParticipants = await this.participantRepository.find({
+        const adminParticipants = await this.participantRepo.find({
           where: {
             conversationId: In(allConvIds),
             userId: adminId,
@@ -144,7 +144,7 @@ export class SystemMessageProcessor extends WorkerHost {
 
         // 5. Bulk create messages
         const newMessages = allConversations.map((conv) => {
-          return this.messageRepository.create({
+          return this.messageRepo.create({
             conversationId: conv.id,
             senderParticipantId: adminParticipantMap.get(conv.id),
             content: content,
@@ -153,7 +153,7 @@ export class SystemMessageProcessor extends WorkerHost {
             sequence: Number(conv.lastMessageSeq || 0) + 1,
           });
         });
-        const savedMessages = await this.messageRepository.save(newMessages);
+        const savedMessages = await this.messageRepo.save(newMessages);
 
         // 6. Bulk update conversations (last message summary)
         const updatedConvs = savedMessages.map((msg) => ({
@@ -164,10 +164,10 @@ export class SystemMessageProcessor extends WorkerHost {
           lastMessageSenderId: msg.senderParticipantId,
           lastMessageAt: msg.createdAt,
         }));
-        await this.conversationRepository.save(updatedConvs);
+        await this.conversationRepo.save(updatedConvs);
 
         // 7. Bulk increment unread counts
-        await this.participantRepository
+        await this.participantRepo
           .createQueryBuilder()
           .update()
           .set({ unreadCount: () => 'unread_count + 1' })

@@ -53,10 +53,9 @@ pids
 *.pid.lock
 
 # Agent
-.agent
+.agents
 .claude
 
 # Additional guidelines
-/api_documentation.md
-/dev-guide.md
-/test-guide.md
+/api_specification.md
+/.brain

@@ -48,10 +48,7 @@ export class ConversationController {
 
   // ==================== GET LIST ====================
   @Get()
-  @ApiOperation({
-    summary: 'Get list of conversations',
-    description: 'Returns a paginated list of conversations.',
-  })
+  @ApiOperation({ summary: 'Get list of conversations' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: ConversationResDto,
@@ -64,11 +61,7 @@ export class ConversationController {
   }
 
   @Get('user')
-  @ApiOperation({
-    summary: 'Get conversations for current user',
-    description:
-      'Returns a paginated list of conversations that the current user is a participant in.',
-  })
+  @ApiOperation({ summary: 'Get conversations for current user' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User conversations returned successfully',
@@ -86,11 +79,7 @@ export class ConversationController {
   }
 
   @Get(':id/participants')
-  @ApiOperation({
-    summary: 'Get list of participants in a conversation',
-    description:
-      'Returns list of participants in a conversation for the specified conversation ID.',
-  })
+  @ApiOperation({ summary: 'Get list of participants in a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of participants returned successfully',
@@ -104,11 +93,7 @@ export class ConversationController {
 
   // ==================== GET INFO ====================
   @Get(':id/info')
-  @ApiOperation({
-    summary: 'Get conversation by ID',
-    description:
-      'Returns conversation information for the specified conversation ID.',
-  })
+  @ApiOperation({ summary: 'Get conversation by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: ConversationResDto,
@@ -120,11 +105,7 @@ export class ConversationController {
 
   // ==================== CREATE ====================
   @Post()
-  @ApiOperation({
-    summary: 'Create a new conversation',
-    description:
-      'Creates a new DIRECT or GROUP conversation. For GROUP, an optional avatar can be uploaded.',
-  })
+  @ApiOperation({ summary: 'Create a new conversation' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: ConversationResDto,
@@ -170,10 +151,7 @@ export class ConversationController {
 
   // ==================== EDIT ====================
   @Put('edit/:id')
-  @ApiOperation({
-    summary: 'Edit a conversation',
-    description: 'Edit a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Edit a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation edited successfully',
@@ -215,10 +193,7 @@ export class ConversationController {
 
   // ==================== ARCHIVE ====================
   @Post('archive/:id')
-  @ApiOperation({
-    summary: 'Archive a conversation',
-    description: 'Archive a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Archive a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation archived successfully',
@@ -230,10 +205,7 @@ export class ConversationController {
 
   // ==================== UNARCHIVE ====================
   @Post('unarchive/:id')
-  @ApiOperation({
-    summary: 'Unarchive a conversation',
-    description: 'Unarchive a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Unarchive a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation unarchived successfully',
@@ -245,10 +217,7 @@ export class ConversationController {
 
   // ==================== MUTE ====================
   @Post('mute/:id')
-  @ApiOperation({
-    summary: 'Mute a conversation',
-    description: 'Mute a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Mute a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation muted successfully',
@@ -264,10 +233,7 @@ export class ConversationController {
 
   // ==================== UNMUTE ====================
   @Post('unmute/:id')
-  @ApiOperation({
-    summary: 'Unmute a conversation',
-    description: 'Unmute a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Unmute a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation unmuted successfully',
@@ -279,10 +245,7 @@ export class ConversationController {
 
   // ==================== PIN ====================
   @Post('pin/:id')
-  @ApiOperation({
-    summary: 'Pin a conversation',
-    description: 'Pin a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Pin a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation pinned successfully',
@@ -294,10 +257,7 @@ export class ConversationController {
 
   // ==================== UNPIN ====================
   @Post('unpin/:id')
-  @ApiOperation({
-    summary: 'Unpin a conversation',
-    description: 'Unpin a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Unpin a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation unpinned successfully',
@@ -309,10 +269,7 @@ export class ConversationController {
 
   // ==================== BLOCK ====================
   @Post('conversation-management/block/:id')
-  @ApiOperation({
-    summary: 'Block a conversation',
-    description: 'Block a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Block a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation blocked successfully',
@@ -325,10 +282,7 @@ export class ConversationController {
 
   // ==================== UNBLOCK ====================
   @Post('conversation-management/unblock/:id')
-  @ApiOperation({
-    summary: 'Unblock a conversation',
-    description: 'Unblock a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Unblock a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation unblocked successfully',
@@ -341,10 +295,7 @@ export class ConversationController {
 
   // ==================== DELETE ====================
   @Delete('conversation-management/delete/:id')
-  @ApiOperation({
-    summary: 'Delete a conversation',
-    description: 'Delete a conversation with the provided details',
-  })
+  @ApiOperation({ summary: 'Delete a conversation' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversation deleted successfully',
@@ -357,10 +308,7 @@ export class ConversationController {
 
   // ==================== ADD MEMBER ====================
   @Post(':id/members')
-  @ApiOperation({
-    summary: 'Add members to group',
-    description: 'Add members to group with the provided details',
-  })
+  @ApiOperation({ summary: 'Add members to group' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Members added successfully',
@@ -376,10 +324,7 @@ export class ConversationController {
 
   // ==================== KICK MEMBER ====================
   @Delete(':id/members')
-  @ApiOperation({
-    summary: 'Kick members from group',
-    description: 'Kick members from group with the provided details',
-  })
+  @ApiOperation({ summary: 'Kick members from group' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Members kicked successfully',
@@ -395,10 +340,7 @@ export class ConversationController {
 
   // ==================== LEAVE GROUP ====================
   @Post(':id/leave')
-  @ApiOperation({
-    summary: 'Leave a group',
-    description: 'Leave a group with the provided details',
-  })
+  @ApiOperation({ summary: 'Leave a group' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Group left successfully',
@@ -410,10 +352,7 @@ export class ConversationController {
 
   // ==================== CHANGE OWNER ====================
   @Post(':id/change-owner')
-  @ApiOperation({
-    summary: 'Change group owner',
-    description: 'Change group owner with the provided details',
-  })
+  @ApiOperation({ summary: 'Change group owner' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Group owner changed successfully',
@@ -428,11 +367,7 @@ export class ConversationController {
   }
   // ==================== REQUEST TO JOIN GROUP ====================
   @Post(':id/join-request')
-  @ApiOperation({
-    summary: 'Request to join a group',
-    description:
-      'Send a request to join a group conversation. The group owner will be notified.',
-  })
+  @ApiOperation({ summary: 'Request to join a group' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Join request sent successfully',
@@ -447,11 +382,7 @@ export class ConversationController {
 
   // ==================== PROCESS JOIN GROUP REQUEST ====================
   @Post(':id/join-request/:requestKey/process')
-  @ApiOperation({
-    summary: 'Process a join group request',
-    description:
-      'Approve or reject a pending join group request. Only the group owner can process requests.',
-  })
+  @ApiOperation({ summary: 'Process a join group request' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Join request processed successfully',

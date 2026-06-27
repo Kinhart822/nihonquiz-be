@@ -30,29 +30,29 @@ jest.mock('typeorm-transactional', () => ({
 
 describe('MessageService', () => {
   let service: MessageService;
-  let messageRepository: jest.Mocked<MessageRepository>;
-  let conversationRepository: jest.Mocked<ConversationRepository>;
-  let participantRepository: jest.Mocked<ParticipantRepository>;
+  let messageRepo: jest.Mocked<MessageRepository>;
+  let conversationRepo: jest.Mocked<ConversationRepository>;
+  let participantRepo: jest.Mocked<ParticipantRepository>;
   let socketEmitterService: jest.Mocked<SocketEmitterService>;
-  let messageAttachmentRepository: jest.Mocked<MessageAttachmentRepository>;
-  let messagePinRepository: jest.Mocked<MessagePinRepository>;
+  let messageAttachmentRepo: jest.Mocked<MessageAttachmentRepository>;
+  let messagePinRepo: jest.Mocked<MessagePinRepository>;
   let systemConfigService: jest.Mocked<SystemConfigService>;
   let fileUploadQueue: any;
 
   beforeEach(async () => {
-    const mockMessageRepository = {
+    const mockMessageRepo = {
       findOne: jest.fn(),
       getConversationMessagesWithFilters: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
     };
 
-    const mockConversationRepository = {
+    const mockConversationRepo = {
       findOne: jest.fn(),
       update: jest.fn(),
     };
 
-    const mockParticipantRepository = {
+    const mockParticipantRepo = {
       findOne: jest.fn(),
       find: jest.fn(),
       update: jest.fn(),
@@ -67,14 +67,14 @@ describe('MessageService', () => {
       emitPinMessage: jest.fn(),
     };
 
-    const mockMessageAttachmentRepository = {
+    const mockMessageAttachmentRepo = {
       getConversationAttachmentsWithFilters: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
     };
 
-    const mockMessagePinRepository = {
+    const mockMessagePinRepo = {
       findOne: jest.fn(),
       getPinnedMessagesWithFilters: jest.fn(),
       create: jest.fn(),
@@ -93,18 +93,18 @@ describe('MessageService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessageService,
-        { provide: MessageRepository, useValue: mockMessageRepository },
+        { provide: MessageRepository, useValue: mockMessageRepo },
         {
           provide: ConversationRepository,
-          useValue: mockConversationRepository,
+          useValue: mockConversationRepo,
         },
-        { provide: ParticipantRepository, useValue: mockParticipantRepository },
+        { provide: ParticipantRepository, useValue: mockParticipantRepo },
         { provide: SocketEmitterService, useValue: mockSocketEmitterService },
         {
           provide: MessageAttachmentRepository,
-          useValue: mockMessageAttachmentRepository,
+          useValue: mockMessageAttachmentRepo,
         },
-        { provide: MessagePinRepository, useValue: mockMessagePinRepository },
+        { provide: MessagePinRepository, useValue: mockMessagePinRepo },
         { provide: SystemConfigService, useValue: mockSystemConfigService },
         {
           provide: getQueueToken(FILE_UPLOAD_QUEUE),
@@ -114,12 +114,12 @@ describe('MessageService', () => {
     }).compile();
 
     service = module.get<MessageService>(MessageService);
-    messageRepository = module.get(MessageRepository);
-    conversationRepository = module.get(ConversationRepository);
-    participantRepository = module.get(ParticipantRepository);
+    messageRepo = module.get(MessageRepository);
+    conversationRepo = module.get(ConversationRepository);
+    participantRepo = module.get(ParticipantRepository);
     socketEmitterService = module.get(SocketEmitterService);
-    messageAttachmentRepository = module.get(MessageAttachmentRepository);
-    messagePinRepository = module.get(MessagePinRepository);
+    messageAttachmentRepo = module.get(MessageAttachmentRepository);
+    messagePinRepo = module.get(MessagePinRepository);
     systemConfigService = module.get(SystemConfigService);
     fileUploadQueue = module.get(getQueueToken(FILE_UPLOAD_QUEUE));
   });
@@ -136,7 +136,7 @@ describe('MessageService', () => {
          * 1. Attempt to fetch conversation from DB.
          * 2. If null, throw NotFound exception.
          */
-        conversationRepository.findOne.mockResolvedValueOnce(null);
+        conversationRepo.findOne.mockResolvedValueOnce(null);
         await expect(service['validateConversation'](1)).rejects.toThrow(
           httpNotFound,
         );
@@ -148,7 +148,7 @@ describe('MessageService', () => {
          * 1. Fetch conversation.
          * 2. If status is BLOCKED, throw BadRequest exception.
          */
-        conversationRepository.findOne.mockResolvedValueOnce({
+        conversationRepo.findOne.mockResolvedValueOnce({
           id: 1,
           status: ConversationStatus.BLOCKED,
         } as any);
@@ -165,7 +165,7 @@ describe('MessageService', () => {
          * 3. Return the conversation entity.
          */
         const mockConv = { id: 1, status: ConversationStatus.ACTIVE };
-        conversationRepository.findOne.mockResolvedValueOnce(mockConv as any);
+        conversationRepo.findOne.mockResolvedValueOnce(mockConv as any);
         const result = await service['validateConversation'](1);
         expect(result).toEqual(mockConv);
       });
@@ -178,7 +178,7 @@ describe('MessageService', () => {
          * 1. Attempt to fetch participant link between user and conversation.
          * 2. If null, throw BadRequest exception.
          */
-        participantRepository.findOne.mockResolvedValueOnce(null);
+        participantRepo.findOne.mockResolvedValueOnce(null);
         await expect(service['validateParticipant'](1, 1)).rejects.toThrow(
           httpBadRequest,
         );
@@ -190,7 +190,7 @@ describe('MessageService', () => {
          * 1. Fetch participant record.
          * 2. If participant status is BLOCKED, throw Forbidden exception.
          */
-        participantRepository.findOne.mockResolvedValueOnce({
+        participantRepo.findOne.mockResolvedValueOnce({
           status: ParticipantStatus.BLOCKED,
         } as any);
         await expect(service['validateParticipant'](1, 1)).rejects.toThrow(
@@ -206,9 +206,7 @@ describe('MessageService', () => {
          * 3. Return the participant entity.
          */
         const mockParticipant = { status: ParticipantStatus.ACTIVE };
-        participantRepository.findOne.mockResolvedValueOnce(
-          mockParticipant as any,
-        );
+        participantRepo.findOne.mockResolvedValueOnce(mockParticipant as any);
         const result = await service['validateParticipant'](1, 1);
         expect(result).toEqual(mockParticipant);
       });
@@ -228,11 +226,11 @@ describe('MessageService', () => {
     };
 
     beforeEach(() => {
-      conversationRepository.findOne.mockResolvedValue({ ...mockConv } as any);
-      participantRepository.findOne.mockResolvedValue({
+      conversationRepo.findOne.mockResolvedValue({ ...mockConv } as any);
+      participantRepo.findOne.mockResolvedValue({
         ...mockParticipant,
       } as any);
-      participantRepository.find.mockResolvedValue([]);
+      participantRepo.find.mockResolvedValue([]);
     });
 
     it('should throw if no content and no files', async () => {
@@ -263,15 +261,15 @@ describe('MessageService', () => {
         content: 'Hello',
         conversationId: 1,
       };
-      messageRepository.create.mockReturnValue({ ...createdMessage } as any);
-      messageRepository.save.mockResolvedValue({ ...createdMessage } as any);
+      messageRepo.create.mockReturnValue({ ...createdMessage } as any);
+      messageRepo.save.mockResolvedValue({ ...createdMessage } as any);
 
       await service.sendMessage(1, dto);
 
-      expect(messageRepository.save).toHaveBeenCalled();
+      expect(messageRepo.save).toHaveBeenCalled();
       expect(socketEmitterService.emitNewMessage).toHaveBeenCalled();
-      expect(conversationRepository.update).toHaveBeenCalled();
-      expect(participantRepository.incrementUnreadCount).toHaveBeenCalled();
+      expect(conversationRepo.update).toHaveBeenCalled();
+      expect(participantRepo.incrementUnreadCount).toHaveBeenCalled();
     });
 
     it('should queue file uploads if attachments provided', async () => {
@@ -291,8 +289,8 @@ describe('MessageService', () => {
         content: 'Hello',
         conversationId: 1,
       };
-      messageRepository.create.mockReturnValue({ ...createdMessage } as any);
-      messageRepository.save.mockResolvedValue({ ...createdMessage } as any);
+      messageRepo.create.mockReturnValue({ ...createdMessage } as any);
+      messageRepo.save.mockResolvedValue({ ...createdMessage } as any);
 
       const files = [
         {
@@ -302,11 +300,11 @@ describe('MessageService', () => {
           mimetype: 'image/png',
         },
       ] as any;
-      messageAttachmentRepository.create.mockReturnValue({ id: 1 } as any);
+      messageAttachmentRepo.create.mockReturnValue({ id: 1 } as any);
 
       await service.sendMessage(1, dto, files);
 
-      expect(messageAttachmentRepository.save).toHaveBeenCalled();
+      expect(messageAttachmentRepo.save).toHaveBeenCalled();
       expect(fileUploadQueue.add).toHaveBeenCalledWith(
         FILE_UPLOAD_JOB.UPLOAD_ATTACHMENT,
         expect.any(Object),
@@ -336,15 +334,15 @@ describe('MessageService', () => {
         user: { email: 'a@a.com' },
       };
 
-      conversationRepository.findOne.mockResolvedValue({ ...mockConv } as any);
-      participantRepository.findOne.mockResolvedValue({
+      conversationRepo.findOne.mockResolvedValue({ ...mockConv } as any);
+      participantRepo.findOne.mockResolvedValue({
         ...mockParticipant,
       } as any);
-      participantRepository.find.mockResolvedValue([]);
+      participantRepo.find.mockResolvedValue([]);
 
       await service.markAsRead(1, { conversationId: 1 });
 
-      expect(participantRepository.update).toHaveBeenCalledWith(
+      expect(participantRepo.update).toHaveBeenCalledWith(
         { conversationId: 1, userId: 1 },
         { lastReadSeq: 5, unreadCount: 0 },
       );
@@ -363,11 +361,11 @@ describe('MessageService', () => {
       const mockMessage = { id: 1, conversationId: 1 };
       const mockParticipant = { id: 1, status: ParticipantStatus.ACTIVE };
 
-      messageRepository.findOne.mockResolvedValue({ ...mockMessage } as any);
-      participantRepository.findOne.mockResolvedValue({
+      messageRepo.findOne.mockResolvedValue({ ...mockMessage } as any);
+      participantRepo.findOne.mockResolvedValue({
         ...mockParticipant,
       } as any);
-      messagePinRepository.findOne.mockResolvedValue({ id: 1 } as any);
+      messagePinRepo.findOne.mockResolvedValue({ id: 1 } as any);
 
       await expect(
         service.pinMessage(1, { messageId: 1, conversationId: 1 }),
@@ -385,16 +383,16 @@ describe('MessageService', () => {
       const mockMessage = { id: 1, conversationId: 1 };
       const mockParticipant = { id: 1, status: ParticipantStatus.ACTIVE };
 
-      messageRepository.findOne.mockResolvedValue({ ...mockMessage } as any);
-      participantRepository.findOne.mockResolvedValue({
+      messageRepo.findOne.mockResolvedValue({ ...mockMessage } as any);
+      participantRepo.findOne.mockResolvedValue({
         ...mockParticipant,
       } as any);
-      messagePinRepository.findOne.mockResolvedValue(null);
+      messagePinRepo.findOne.mockResolvedValue(null);
 
       await service.pinMessage(1, { messageId: 1, conversationId: 1 });
 
-      expect(messagePinRepository.create).toHaveBeenCalled();
-      expect(messagePinRepository.save).toHaveBeenCalled();
+      expect(messagePinRepo.create).toHaveBeenCalled();
+      expect(messagePinRepo.save).toHaveBeenCalled();
       expect(socketEmitterService.emitPinMessage).toHaveBeenCalled();
     });
   });

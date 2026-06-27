@@ -37,6 +37,7 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // ==================== REGISTER & LOGIN ====================
   @Post('/register')
   @PublicRoute()
   @ApiOperation({ summary: 'Register a new user' })
@@ -61,6 +62,7 @@ export class AuthController {
     return this.authService.signIn(dto);
   }
 
+  // ==================== LOGOUT ====================
   @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout current user' })
@@ -72,6 +74,7 @@ export class AuthController {
     return this.authService.logout(user.id);
   }
 
+  // ==================== OTP & PASSWORD ====================
   @Post('verify-otp')
   @PublicRoute()
   @ApiOperation({ summary: 'Verify OTP code' })
@@ -120,6 +123,7 @@ export class AuthController {
     return this.authService.resendCode(dto);
   }
 
+  // ==================== REFRESH TOKEN ====================
   @Post('refresh-token')
   @PublicRoute()
   @ApiOperation({ summary: 'Refresh access token' })
@@ -132,6 +136,7 @@ export class AuthController {
     return this.authService.refreshToken(dto);
   }
 
+  // ==================== GOOGLE AUTH ====================
   @UseGuards(GoogleAuthGuard)
   @PublicRoute()
   @Get('google')

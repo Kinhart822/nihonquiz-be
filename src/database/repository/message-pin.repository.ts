@@ -1,5 +1,5 @@
 import { MessagePinEntity } from '@entities/message-pin.entity';
-import { MessagePinFilterDto } from '@modules/message/dto/message.req.dto';
+import { MessagePinFilterDto } from '@modules/message/dtos/message.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { normalizeDate } from '@utils/date';
 import { BaseRepository } from './base.repository';

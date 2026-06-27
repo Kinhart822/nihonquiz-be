@@ -42,22 +42,22 @@ import {
   PinMessageDto,
   SendMessageDto,
   UnpinMessageDto,
-} from './dto/message.req.dto';
+} from './dtos/message.req.dto';
 import {
   MessageAttachmentResDto,
   MessagePinResDto,
   MessageResDto,
-} from './dto/message.res.dto';
+} from './dtos/message.res.dto';
 
 @Injectable()
 export class MessageService {
   constructor(
-    private readonly messageRepository: MessageRepository,
-    private readonly conversationRepository: ConversationRepository,
-    private readonly participantRepository: ParticipantRepository,
+    private readonly messageRepo: MessageRepository,
+    private readonly conversationRepo: ConversationRepository,
+    private readonly participantRepo: ParticipantRepository,
     private readonly socketEmitterService: SocketEmitterService,
-    private readonly messageAttachmentRepository: MessageAttachmentRepository,
-    private readonly messagePinRepository: MessagePinRepository,
+    private readonly messageAttachmentRepo: MessageAttachmentRepository,
+    private readonly messagePinRepo: MessagePinRepository,
     private readonly systemConfigService: SystemConfigService,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
   ) {}
@@ -72,11 +72,11 @@ export class MessageService {
   ): Promise<ConversationEntity> {
     let conversation: ConversationEntity | null;
     if (type) {
-      conversation = await this.conversationRepository.findOne({
+      conversation = await this.conversationRepo.findOne({
         where: { id: conversationId, type },
       });
     } else {
-      conversation = await this.conversationRepository.findOne({
+      conversation = await this.conversationRepo.findOne({
         where: { id: conversationId },
       });
     }
@@ -105,7 +105,7 @@ export class MessageService {
    * Validate message
    */
   private async validateMessage(messageId: number): Promise<MessageEntity> {
-    const message = await this.messageRepository.findOne({
+    const message = await this.messageRepo.findOne({
       where: { id: messageId },
     });
     if (!message) {
@@ -125,7 +125,7 @@ export class MessageService {
     userId: number,
     relations?: any,
   ) {
-    const participant = await this.participantRepository.findOne({
+    const participant = await this.participantRepo.findOne({
       where: { conversationId, userId },
       relations,
     });
@@ -184,7 +184,7 @@ export class MessageService {
    * Validate message is not pinned
    */
   private async validateMessageIsNotPinned(message: MessageEntity) {
-    const isPinned = await this.messagePinRepository.findOne({
+    const isPinned = await this.messagePinRepo.findOne({
       where: { messageId: message.id },
     });
     if (isPinned) {
@@ -227,12 +227,12 @@ export class MessageService {
     lastMessage?: MessageEntity,
   ) {
     try {
-      const participants = await this.participantRepository.find({
+      const participants = await this.participantRepo.find({
         where: { conversationId },
         relations: { user: true },
       });
 
-      const conversation = await this.conversationRepository.findOne({
+      const conversation = await this.conversationRepo.findOne({
         where: { id: conversationId },
       });
 
@@ -290,7 +290,7 @@ export class MessageService {
 
   // ==================== GET MESSAGE INFO ====================
   async getMessageInfo(messageId: number) {
-    const message = await this.messageRepository.findOne({
+    const message = await this.messageRepo.findOne({
       where: { id: messageId },
       relations: {
         replyToMessage: true,
@@ -324,7 +324,7 @@ export class MessageService {
     }
 
     const { entities, total } =
-      await this.messageRepository.getConversationMessagesWithFilters(
+      await this.messageRepo.getConversationMessagesWithFilters(
         conversationId,
         filterDto,
       );
@@ -343,7 +343,7 @@ export class MessageService {
     filterDto: MessageAttachmentFilterDto,
   ): Promise<PageDto<MessageAttachmentResDto>> {
     const { entities, total } =
-      await this.messageAttachmentRepository.getConversationAttachmentsWithFilters(
+      await this.messageAttachmentRepo.getConversationAttachmentsWithFilters(
         conversationId,
         filterDto,
       );
@@ -368,7 +368,7 @@ export class MessageService {
     filterDto: MessageFilterDto,
   ): Promise<PageDto<MessagePinResDto>> {
     const { entities, total } =
-      await this.messagePinRepository.getPinnedMessagesWithFilters(
+      await this.messagePinRepo.getPinnedMessagesWithFilters(
         conversationId,
         filterDto,
       );
@@ -435,7 +435,7 @@ export class MessageService {
     const messageType = hasFiles ? MessageType.ATTACHMENT : MessageType.TEXT;
 
     // Create message
-    const message = this.messageRepository.create({
+    const message = this.messageRepo.create({
       sequence: Number(conversation.lastMessageSeq || 0) + 1,
       conversationId: dto.conversationId,
       senderParticipantId: senderParticipant.id,
@@ -445,7 +445,7 @@ export class MessageService {
       replyToMessageId: dto.replyToMessageId,
     });
 
-    await this.messageRepository.save(message);
+    await this.messageRepo.save(message);
     message.attachments = [];
     message.pins = [];
     message.replyToMessage = parentMessage as MessageEntity;
@@ -463,7 +463,7 @@ export class MessageService {
 
       // Create message_attachments with PENDING status
       const messageAttachments = files.map((file) => {
-        return this.messageAttachmentRepository.create({
+        return this.messageAttachmentRepo.create({
           messageId: message.id,
           type: MessageAttachmentType.FILE,
           status: MessageAttachmentStatus.PENDING,
@@ -473,7 +473,7 @@ export class MessageService {
         });
       });
 
-      await this.messageAttachmentRepository.save(messageAttachments);
+      await this.messageAttachmentRepo.save(messageAttachments);
       message.attachments = messageAttachments;
 
       // Add jobs to queue for background upload
@@ -499,7 +499,7 @@ export class MessageService {
     );
 
     // Update conversation
-    await this.conversationRepository.update(dto.conversationId, {
+    await this.conversationRepo.update(dto.conversationId, {
       lastMessageId: message.id,
       lastMessageSeq: message.sequence,
       lastMessagePreview: preview,
@@ -509,7 +509,7 @@ export class MessageService {
     });
 
     // Increment unread count for other participants
-    await this.participantRepository.incrementUnreadCount(
+    await this.participantRepo.incrementUnreadCount(
       dto.conversationId,
       senderParticipant.userId,
     );
@@ -537,7 +537,7 @@ export class MessageService {
     );
 
     // Validate message with attachments relation
-    const message = await this.messageRepository.findOne({
+    const message = await this.messageRepo.findOne({
       where: { id: dto.messageId },
       relations: { attachments: true },
     });
@@ -596,7 +596,7 @@ export class MessageService {
     if (hasFiles) {
       // Delete old attachments from DB
       if (message.attachments.length > 0) {
-        await this.messageAttachmentRepository.delete({
+        await this.messageAttachmentRepo.delete({
           messageId: message.id,
         });
       }
@@ -613,7 +613,7 @@ export class MessageService {
 
       // Create message_attachments with PENDING status
       const newAttachments = files.map((file) => {
-        return this.messageAttachmentRepository.create({
+        return this.messageAttachmentRepo.create({
           messageId: message.id,
           type: MessageAttachmentType.FILE,
           status: MessageAttachmentStatus.PENDING,
@@ -623,7 +623,7 @@ export class MessageService {
         });
       });
 
-      await this.messageAttachmentRepository.save(newAttachments);
+      await this.messageAttachmentRepo.save(newAttachments);
       message.attachments = newAttachments;
       message.type = MessageType.ATTACHMENT;
 
@@ -651,7 +651,7 @@ export class MessageService {
     message.editCount += 1;
     message.isEdited = true;
     message.editedAt = new Date();
-    await this.messageRepository.save(message);
+    await this.messageRepo.save(message);
 
     // Determine preview text for conversation update
     const preview = this.generateMessagePreview(
@@ -660,19 +660,19 @@ export class MessageService {
     );
 
     // Update conversation if this was the last message
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.conversationRepo.findOne({
       where: { id: message.conversationId },
     });
 
     if (conversation && conversation.lastMessageId === message.id) {
-      await this.conversationRepository.update(message.conversationId, {
+      await this.conversationRepo.update(message.conversationId, {
         lastMessagePreview: preview,
         lastMessageType: message.type,
       });
     }
 
     // Get full message info for emission
-    const updatedMessage = await this.messageRepository.findOne({
+    const updatedMessage = await this.messageRepo.findOne({
       where: { id: message.id },
       relations: {
         attachments: true,
@@ -681,7 +681,7 @@ export class MessageService {
     });
 
     // Increment unread count for other participants on edit as requested
-    await this.participantRepository.incrementUnreadCount(
+    await this.participantRepo.incrementUnreadCount(
       message.conversationId,
       participant.userId,
     );
@@ -714,7 +714,7 @@ export class MessageService {
     );
 
     // Mark all messages in conversation as read
-    await this.participantRepository.update(
+    await this.participantRepo.update(
       {
         conversationId: dto.conversationId,
         userId: participant.userId,
@@ -752,13 +752,13 @@ export class MessageService {
     await this.validateMessageIsNotPinned(message);
 
     // Create message pin
-    const messagePin = this.messagePinRepository.create({
+    const messagePin = this.messagePinRepo.create({
       conversationId: message.conversationId,
       messageId: message.id,
       pinnedAt: new Date(),
       pinnedByParticipantId: participant.id,
     });
-    await this.messagePinRepository.save(messagePin);
+    await this.messagePinRepo.save(messagePin);
 
     // Emit message to conversation room
     this.socketEmitterService.emitPinMessage(
@@ -780,7 +780,7 @@ export class MessageService {
     );
 
     // Validate participant is pinned by
-    const messagePin = await this.messagePinRepository.findOne({
+    const messagePin = await this.messagePinRepo.findOne({
       where: {
         messageId: message.id,
       },
@@ -799,7 +799,7 @@ export class MessageService {
     }
 
     // Delete message PIN
-    await this.messagePinRepository.delete({
+    await this.messagePinRepo.delete({
       messageId: message.id,
     });
 

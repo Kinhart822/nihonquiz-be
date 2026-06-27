@@ -17,12 +17,12 @@ jest.mock('typeorm-transactional', () => ({
 
 describe('UserService', () => {
   let service: UserService;
-  let userRepository: jest.Mocked<UserRepository>;
+  let userRepo: jest.Mocked<UserRepository>;
   let configService: jest.Mocked<ConfigService>;
   let fileUploadQueue: any;
 
   beforeEach(async () => {
-    const mockUserRepository = {
+    const mockUserRepo = {
       findOne: jest.fn(),
       existsBy: jest.fn(),
       save: jest.fn(),
@@ -41,7 +41,7 @@ describe('UserService', () => {
         UserService,
         {
           provide: UserRepository,
-          useValue: mockUserRepository,
+          useValue: mockUserRepo,
         },
         {
           provide: ConfigService,
@@ -55,7 +55,7 @@ describe('UserService', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
-    userRepository = module.get(UserRepository);
+    userRepo = module.get(UserRepository);
     configService = module.get(ConfigService);
     fileUploadQueue = module.get(getQueueToken(FILE_UPLOAD_QUEUE));
   });
@@ -75,10 +75,10 @@ describe('UserService', () => {
        * 1. Query User DB by ID.
        * 2. If null, throw NotFound exception.
        */
-      userRepository.findOne.mockResolvedValue(null);
+      userRepo.findOne.mockResolvedValue(null);
 
       await expect(service.getProfile(1)).rejects.toThrow(httpNotFound);
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(userRepo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
     });
 
     it('should return user profile if user exists', async () => {
@@ -88,14 +88,14 @@ describe('UserService', () => {
        * 2. If exists, return user entity.
        */
       const mockUser = { id: 1, username: 'testuser', email: 'test@test.com' };
-      userRepository.findOne.mockResolvedValue(mockUser as any);
+      userRepo.findOne.mockResolvedValue(mockUser as any);
 
       const result = await service.getProfile(1);
 
       expect(result).toBeDefined();
       expect(result.id).toBe(1);
       expect(result.username).toBe('testuser');
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(userRepo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
     });
   });
 
@@ -106,7 +106,7 @@ describe('UserService', () => {
        * 1. Attempt to find the user in DB.
        * 2. If user doesn't exist, throw NotFound exception.
        */
-      userRepository.findOne.mockResolvedValue(null);
+      userRepo.findOne.mockResolvedValue(null);
 
       await expect(service.updateProfile(1, {})).rejects.toThrow(httpNotFound);
     });
@@ -118,13 +118,13 @@ describe('UserService', () => {
        * 2. If duplicate, throw BadRequest exception.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepository.findOne.mockResolvedValue(mockUser as any);
-      userRepository.existsBy.mockResolvedValue(true);
+      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.existsBy.mockResolvedValue(true);
 
       await expect(
         service.updateProfile(1, { username: 'newuser' }),
       ).rejects.toThrow(httpBadRequest);
-      expect(userRepository.existsBy).toHaveBeenCalledWith({
+      expect(userRepo.existsBy).toHaveBeenCalledWith({
         username: 'newuser',
       });
     });
@@ -137,7 +137,7 @@ describe('UserService', () => {
        * 3. If file exceeds the limit, throw BadRequest exception.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepository.findOne.mockResolvedValue(mockUser as any);
+      userRepo.findOne.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(100); // 100 bytes max
 
       const avatarFile = { size: 200, originalname: 'avatar.png' } as any;
@@ -156,7 +156,7 @@ describe('UserService', () => {
        * 4. Save DB record & return success message.
        */
       const mockUser: any = { id: 1, username: 'olduser' };
-      userRepository.findOne.mockResolvedValue(mockUser);
+      userRepo.findOne.mockResolvedValue(mockUser);
       configService.get.mockReturnValue(1000); // 1000 bytes max
 
       const avatarFile = {
@@ -185,7 +185,7 @@ describe('UserService', () => {
           },
         },
       );
-      expect(userRepository.save).toHaveBeenCalledWith(mockUser);
+      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({ message: UPDATE_PROFILE_RES });
     });
 
@@ -197,7 +197,7 @@ describe('UserService', () => {
        * 3. Save DB record & return success message.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepository.findOne.mockResolvedValue(mockUser as any);
+      userRepo.findOne.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(1000);
 
       const bgFile = {
@@ -226,7 +226,7 @@ describe('UserService', () => {
           },
         },
       );
-      expect(userRepository.save).toHaveBeenCalledWith(mockUser);
+      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({ message: UPDATE_PROFILE_RES });
     });
   });

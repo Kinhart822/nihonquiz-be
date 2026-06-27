@@ -21,7 +21,7 @@ import {
   CreateConfigRequestDto,
   SystemConfigFilterDto,
   UpdateConfigRequestDto,
-} from './dto/system-config.req.dto';
+} from './dtos/system-config.req.dto';
 import { SystemConfigService } from './system-config.service';
 
 @ApiTags('System Config')
@@ -30,11 +30,9 @@ import { SystemConfigService } from './system-config.service';
 export class SystemConfigController {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
+  // ==================== GET INFO ====================
   @Get(':key')
-  @ApiOperation({
-    summary: 'Get config by key',
-    description: 'Retrieves a system configuration value by its unique key.',
-  })
+  @ApiOperation({ summary: 'Get config by key' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'System config retrieved successfully',
@@ -43,11 +41,9 @@ export class SystemConfigController {
     return this.systemConfigService.getConfig(key);
   }
 
+  // ==================== GET LIST ====================
   @Get('list')
-  @ApiOperation({
-    summary: 'Get all configs',
-    description: 'Returns a paginated list of all system configurations.',
-  })
+  @ApiOperation({ summary: 'Get all configs' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'System configs list retrieved successfully',
@@ -56,11 +52,9 @@ export class SystemConfigController {
     return this.systemConfigService.getSystemConfigs(filter);
   }
 
+  // ==================== CREATE ====================
   @Post()
-  @ApiOperation({
-    summary: 'Create config',
-    description: 'Creates a new system configuration key-value pair.',
-  })
+  @ApiOperation({ summary: 'Create config' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'System config created successfully',
@@ -70,11 +64,9 @@ export class SystemConfigController {
     return this.systemConfigService.createSystemConfig(dto.key, dto.value);
   }
 
+  // ==================== UPDATE ====================
   @Put()
-  @ApiOperation({
-    summary: 'Update config',
-    description: 'Updates the value of an existing system configuration key.',
-  })
+  @ApiOperation({ summary: 'Update config' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'System config updated successfully',
@@ -84,11 +76,9 @@ export class SystemConfigController {
     return this.systemConfigService.updateSystemConfig(dto.key, dto.value);
   }
 
+  // ==================== DELETE ====================
   @Delete(':key')
-  @ApiOperation({
-    summary: 'Delete config',
-    description: 'Deletes a system configuration by its key.',
-  })
+  @ApiOperation({ summary: 'Delete config' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'System config deleted successfully',

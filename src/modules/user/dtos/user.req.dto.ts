@@ -65,3 +65,15 @@ export class UpdateProfileDto {
   @MaxLength(500, { message: 'Description must be at most 500 characters' })
   description?: string;
 }
+
+export class ChangePasswordDto {
+  @ApiProperty({ description: 'Current password', example: 'oldpass123' })
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  oldPassword!: string;
+
+  @ApiProperty({ description: 'New password', example: 'newpass123' })
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  newPassword!: string;
+}

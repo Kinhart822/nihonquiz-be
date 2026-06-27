@@ -1,7 +1,7 @@
 import { Order } from '@constants/pagination.constant';
 import { RoleUser } from '@constants/user.constant';
 import { UserEntity } from '@entities/user.entity';
-import { UserFilterDto } from '@modules/user/dto/user.req.dto';
+import { UserFilterDto } from '@modules/user/dtos/user.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { BaseRepository } from './base.repository';
 

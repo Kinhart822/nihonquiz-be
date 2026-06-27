@@ -18,8 +18,8 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
-import { UpdateProfileDto } from './dto/user.req.dto';
-import { UserResDto } from './dto/user.res.dto';
+import { ChangePasswordDto, UpdateProfileDto } from './dtos/user.req.dto';
+import { UserResDto } from './dtos/user.res.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User')
@@ -100,5 +100,28 @@ export class UserController {
     const avatar = files?.avatar?.[0];
     const background = files?.background?.[0];
     return this.userService.updateProfile(user.id, dto, avatar, background);
+  }
+
+  // ==================== CHANGE PASSWORD ====================
+  @Put('password')
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password changed successfully',
+        },
+      },
+    },
+    description: 'Password changed successfully',
+  })
+  async changePassword(
+    @AuthUser() user: JwtPayloadDto,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.changePassword(user.id, dto);
   }
 }

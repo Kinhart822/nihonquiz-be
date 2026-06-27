@@ -19,7 +19,7 @@ export class MailConsumer extends WorkerHost {
   constructor(
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
-    private readonly emailLogRepository: EmailLogRepository,
+    private readonly emailLogRepo: EmailLogRepository,
   ) {
     super();
     this.logger.log(
@@ -95,7 +95,7 @@ export class MailConsumer extends WorkerHost {
       // Re-throw error to trigger BullMQ retry mechanism
       throw error;
     } finally {
-      await this.emailLogRepository.save(emailLog);
+      await this.emailLogRepo.save(emailLog);
     }
   }
 

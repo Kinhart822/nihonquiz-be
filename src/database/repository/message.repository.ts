@@ -1,6 +1,6 @@
 import { Order } from '@constants/pagination.constant';
 import { MessageEntity } from '@entities/message.entity';
-import { MessageFilterDto } from '@modules/message/dto/message.req.dto';
+import { MessageFilterDto } from '@modules/message/dtos/message.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { normalizeDate } from '@utils/date';
 import { BaseRepository } from './base.repository';

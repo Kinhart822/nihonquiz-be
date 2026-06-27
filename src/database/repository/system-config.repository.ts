@@ -1,4 +1,4 @@
-import { SystemConfigFilterDto } from '@modules/system-config/dto/system-config.req.dto';
+import { SystemConfigFilterDto } from '@modules/system-config/dtos/system-config.req.dto';
 import { CustomRepository } from '@shared/decorators/typeorm.decorator';
 import { SystemConfigEntity } from '../entities/system-config.entity';
 import { BaseRepository } from './base.repository';

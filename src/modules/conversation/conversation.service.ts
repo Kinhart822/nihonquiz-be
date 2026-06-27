@@ -54,9 +54,9 @@ import { JoinRequestRedisData } from './interface/join-conversation.interface';
 @Injectable()
 export class ConversationService {
   constructor(
-    private readonly conversationRepository: ConversationRepository,
-    private readonly userRepository: UserRepository,
-    private readonly participantRepository: ParticipantRepository,
+    private readonly conversationRepo: ConversationRepository,
+    private readonly userRepo: UserRepository,
+    private readonly participantRepo: ParticipantRepository,
     private readonly redisService: RedisService,
     private readonly socketEmitterService: SocketEmitterService,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
@@ -73,7 +73,7 @@ export class ConversationService {
     const where: any = { id: conversationId };
     if (type) where.type = type;
 
-    const conversation = await this.conversationRepository.findOneBy(where);
+    const conversation = await this.conversationRepo.findOneBy(where);
     if (!conversation) {
       throw new httpNotFound(
         httpErrors.CONVERSATION_NOT_FOUND.message,
@@ -99,7 +99,7 @@ export class ConversationService {
     const conversation = await this.validateConversation(conversationId, type);
 
     // Validate participant
-    const participant = await this.participantRepository.findOne({
+    const participant = await this.participantRepo.findOne({
       where: { conversationId, userId },
       relations: { user: true },
     });
@@ -151,7 +151,7 @@ export class ConversationService {
    * Validate user is the admin
    */
   private async validateAdmin(userId: number) {
-    const user = await this.userRepository.findOne({
+    const user = await this.userRepo.findOne({
       where: { id: userId, role: RoleUser.ADMIN },
     });
     if (!user) {
@@ -178,7 +178,7 @@ export class ConversationService {
   async getInfoConversation(
     conversationId: number,
   ): Promise<ConversationResDto> {
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.conversationRepo.findOne({
       where: {
         id: conversationId,
       },
@@ -201,7 +201,7 @@ export class ConversationService {
     PageDto<{ conversation: ConversationResDto; unreadCount: number }>
   > {
     const { entities, total } =
-      await this.conversationRepository.getUserConversationsWithFilters(
+      await this.conversationRepo.getUserConversationsWithFilters(
         userId,
         filterDto,
       );
@@ -226,7 +226,7 @@ export class ConversationService {
     filterDto: ConversationFilterDto,
   ): Promise<PageDto<ConversationResDto>> {
     const { entities, total } =
-      await this.conversationRepository.getConversationsWithFilters(filterDto);
+      await this.conversationRepo.getConversationsWithFilters(filterDto);
 
     const mappedItems = entities.map((conversation) => {
       return this.mapConversationToResponse(conversation);
@@ -242,7 +242,7 @@ export class ConversationService {
     filterDto: ParticipantFilterDto,
   ): Promise<PageDto<ParticipantResDto>> {
     const { entities, total } =
-      await this.participantRepository.getParticipantsWithFilters(
+      await this.participantRepo.getParticipantsWithFilters(
         conversationId,
         filterDto,
       );
@@ -274,7 +274,7 @@ export class ConversationService {
     file?: Express.Multer.File,
   ) {
     // Check if user is blocked or deleted
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: userId } });
     if (user?.status === UserStatus.BLOCKED) {
       throw new httpForbidden(
         httpErrors.BLOCKED_USER.message,
@@ -299,7 +299,7 @@ export class ConversationService {
     }
 
     // Check if the participants exist in the system
-    const validParticipants = await this.userRepository.find({
+    const validParticipants = await this.userRepo.find({
       where: { id: In(participants) },
     });
     if (validParticipants.length !== participants.length) {
@@ -317,7 +317,7 @@ export class ConversationService {
           httpErrors.INVALID_PARTICIPANTS.code,
         );
       }
-      const existConversation = await this.conversationRepository
+      const existConversation = await this.conversationRepo
         .createQueryBuilder('c')
         .innerJoin('c.participants', 'p1', 'p1.userId = :userId', { userId })
         .innerJoin('c.participants', 'p2', 'p2.userId = :participantId', {
@@ -346,13 +346,13 @@ export class ConversationService {
     }
 
     // Create conversation
-    const conversation = await this.conversationRepository.create({
+    const conversation = await this.conversationRepo.create({
       name,
       avatarUrl,
       type,
       ownerId: userId,
     });
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     if (file) {
       await this.fileUploadQueue.add(
@@ -370,7 +370,7 @@ export class ConversationService {
     }
 
     // Create Participants
-    const currentParticipant = await this.participantRepository.create({
+    const currentParticipant = await this.participantRepo.create({
       conversationId: conversation.id,
       userId,
       role: ParticipantRole.OWNER,
@@ -380,7 +380,7 @@ export class ConversationService {
       lastReadSeq: 0,
     });
     const participantList = participants.map((participant) => {
-      return this.participantRepository.create({
+      return this.participantRepo.create({
         conversationId: conversation.id,
         userId: participant,
         role: ParticipantRole.MEMBER,
@@ -390,10 +390,7 @@ export class ConversationService {
         lastReadSeq: 0,
       });
     });
-    await this.participantRepository.save([
-      currentParticipant,
-      ...participantList,
-    ]);
+    await this.participantRepo.save([currentParticipant, ...participantList]);
 
     // Emit socket event
     this.socketEmitterService.emitCreateConversation(
@@ -441,7 +438,7 @@ export class ConversationService {
       );
     }
     if (payload.type) conversation.type = payload.type;
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     // Emit socket event
     this.socketEmitterService.emitEditConversation(
@@ -465,7 +462,7 @@ export class ConversationService {
       );
     }
     participant.status = ParticipantStatus.ARCHIVED;
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitArchiveConversation(
@@ -484,7 +481,7 @@ export class ConversationService {
     // Unarchive
     if (participant.status === ParticipantStatus.ARCHIVED) {
       participant.status = ParticipantStatus.ACTIVE;
-      await this.participantRepository.save(participant);
+      await this.participantRepo.save(participant);
     } else {
       throw new httpBadRequest(
         httpErrors.CONVERSATION_NOT_ARCHIVED.message,
@@ -526,7 +523,7 @@ export class ConversationService {
 
     participant.muteUntil = muteUntil;
     participant.isMuted = true;
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitMuteConversation(
@@ -545,7 +542,7 @@ export class ConversationService {
     // Unmute conversation
     participant.isMuted = false;
     participant.muteUntil = null;
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitUnmuteConversation(
@@ -572,7 +569,7 @@ export class ConversationService {
     // Pin conversation
     participant.isPinned = true;
     participant.pinnedAt = new Date();
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitPinConversation(
@@ -599,7 +596,7 @@ export class ConversationService {
     // Unpin conversation
     participant.isPinned = false;
     participant.pinnedAt = null;
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitUnpinConversation(
@@ -615,7 +612,7 @@ export class ConversationService {
     await this.validateAdmin(userId);
 
     // Get conversation
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
     });
     if (!conversation) {
@@ -642,7 +639,7 @@ export class ConversationService {
     }
 
     conversation.status = ConversationStatus.BLOCKED;
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     // Emit socket event
     this.socketEmitterService.emitBlockConversation(
@@ -658,7 +655,7 @@ export class ConversationService {
     await this.validateAdmin(userId);
 
     // Get conversation
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
     });
     if (!conversation) {
@@ -677,7 +674,7 @@ export class ConversationService {
     }
 
     conversation.status = ConversationStatus.ACTIVE;
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     // Emit socket event
     this.socketEmitterService.emitUnblockConversation(
@@ -693,7 +690,7 @@ export class ConversationService {
     await this.validateAdmin(userId);
 
     // Get conversation
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
     });
     if (!conversation) {
@@ -714,7 +711,7 @@ export class ConversationService {
     // Delete conversation
     conversation.status = ConversationStatus.DELETED;
     conversation.deletedAt = new Date();
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     // Emit socket event
     this.socketEmitterService.emitDeleteConversation(
@@ -724,7 +721,7 @@ export class ConversationService {
     return true;
   }
 
-  // ==================== Add member to group ====================
+  // ==================== ADD MEMBER ====================
   @Transactional()
   async addMemberToGroup(
     userId: number,
@@ -738,7 +735,7 @@ export class ConversationService {
     );
 
     // Validate all user IDs exist in the system and are active
-    const validUsers = await this.userRepository.find({
+    const validUsers = await this.userRepo.find({
       where: { id: In(payload.userIds), status: UserStatus.ACTIVE },
     });
     if (validUsers.length !== payload.userIds.length) {
@@ -749,7 +746,7 @@ export class ConversationService {
     }
 
     // Get existing participant records for the requested user IDs
-    const existingParticipants = await this.participantRepository.find({
+    const existingParticipants = await this.participantRepo.find({
       where: {
         conversationId,
         userId: In(payload.userIds),
@@ -794,7 +791,7 @@ export class ConversationService {
         participant.unreadCount = 0;
         participant.lastReadSeq = 0;
       }
-      await this.participantRepository.save(leftOrKickedParticipants);
+      await this.participantRepo.save(leftOrKickedParticipants);
     }
 
     // Create records for new users
@@ -804,7 +801,7 @@ export class ConversationService {
     );
 
     const newParticipants = newUserIds.map((uid) =>
-      this.participantRepository.create({
+      this.participantRepo.create({
         conversationId,
         userId: uid,
         status: ParticipantStatus.ACTIVE,
@@ -815,11 +812,11 @@ export class ConversationService {
       }),
     );
     if (newParticipants.length > 0) {
-      await this.participantRepository.save(newParticipants);
+      await this.participantRepo.save(newParticipants);
     }
 
     // Update conversation type
-    const currentActiveCount = await this.participantRepository.count({
+    const currentActiveCount = await this.participantRepo.count({
       where: {
         conversationId,
         status: In([ParticipantStatus.ACTIVE, ParticipantStatus.ARCHIVED]),
@@ -833,7 +830,7 @@ export class ConversationService {
 
     if (totalActiveCount > 2 && conversation.type !== ConversationType.GROUP) {
       conversation.type = ConversationType.GROUP;
-      await this.conversationRepository.save(conversation);
+      await this.conversationRepo.save(conversation);
     }
 
     // Emit socket event
@@ -857,7 +854,7 @@ export class ConversationService {
     payload: RemoveConversationMemberDto,
   ) {
     // 1. Check if group exists
-    const existConversation = await this.conversationRepository.findOne({
+    const existConversation = await this.conversationRepo.findOne({
       where: { id: conversationId, type: ConversationType.GROUP },
     });
     if (!existConversation) {
@@ -868,7 +865,7 @@ export class ConversationService {
     }
 
     // 2. Check if current user is owner
-    const currentUserParticipant = await this.participantRepository.findOne({
+    const currentUserParticipant = await this.participantRepo.findOne({
       where: {
         conversationId,
         userId,
@@ -884,7 +881,7 @@ export class ConversationService {
     }
 
     // 3. Get members to be kicked
-    const membersToKick = await this.participantRepository.find({
+    const membersToKick = await this.participantRepo.find({
       where: {
         conversationId,
         userId: In(payload.participantIds),
@@ -924,7 +921,7 @@ export class ConversationService {
       member.leftAt = new Date();
       kickedEmails.push(member.user.email);
     }
-    await this.participantRepository.save(membersToKick);
+    await this.participantRepo.save(membersToKick);
 
     // 7. Emit socket event with kicked member emails
     this.socketEmitterService.emitRemoveMemberFromGroup(conversationId, {
@@ -945,7 +942,7 @@ export class ConversationService {
     );
 
     // 2. Check if user is already an active participant
-    const existingParticipant = await this.participantRepository.findOne({
+    const existingParticipant = await this.participantRepo.findOne({
       where: { conversationId, userId },
       relations: { user: true },
     });
@@ -989,7 +986,7 @@ export class ConversationService {
     // 4. Generate UUID key and store join request in Redis
     const requester =
       existingParticipant?.user ??
-      (await this.userRepository.findOne({ where: { id: userId } }));
+      (await this.userRepo.findOne({ where: { id: userId } }));
     const requestKey = uuidv4();
 
     const joinRequestData: JoinRequestRedisData = {
@@ -1012,7 +1009,7 @@ export class ConversationService {
     await this.redisService.set(pendingKey, requestKey, JOIN_REQUEST_TTL);
 
     // 6. Notify group owner
-    const owner = await this.userRepository.findOne({
+    const owner = await this.userRepo.findOne({
       where: { id: conversation.ownerId },
     });
     if (owner) {
@@ -1056,7 +1053,7 @@ export class ConversationService {
     // 3. Process based on status
     if (payload.action === JoinGroupRequestAction.ACCEPT) {
       // Check if user has an existing participant record
-      const existingParticipant = await this.participantRepository.findOne({
+      const existingParticipant = await this.participantRepo.findOne({
         where: {
           conversationId: joinRequestData.conversationId,
           userId: joinRequestData.userId,
@@ -1096,11 +1093,11 @@ export class ConversationService {
           existingParticipant.role = ParticipantRole.MEMBER;
           existingParticipant.joinedAt = new Date();
           existingParticipant.leftAt = null;
-          await this.participantRepository.save(existingParticipant);
+          await this.participantRepo.save(existingParticipant);
         }
       } else {
         // Add new participant
-        const newParticipant = this.participantRepository.create({
+        const newParticipant = this.participantRepo.create({
           conversationId: joinRequestData.conversationId,
           userId: joinRequestData.userId,
           role: ParticipantRole.MEMBER,
@@ -1109,7 +1106,7 @@ export class ConversationService {
           unreadCount: 0,
           lastReadSeq: 0,
         });
-        await this.participantRepository.save(newParticipant);
+        await this.participantRepo.save(newParticipant);
       }
 
       // Notify the conversation
@@ -1170,7 +1167,7 @@ export class ConversationService {
     // Leave group
     participant.status = ParticipantStatus.LEFT;
     participant.leftAt = new Date();
-    await this.participantRepository.save(participant);
+    await this.participantRepo.save(participant);
 
     // Emit socket event
     this.socketEmitterService.emitLeaveGroup(
@@ -1193,24 +1190,24 @@ export class ConversationService {
     );
 
     // Check if the new owner is a participant in the conversation
-    const newOwnerParticipant = await this.participantRepository.findOne({
+    const newOwnerParticipant = await this.participantRepo.findOne({
       where: { conversationId, userId: payload.ownerId },
     });
 
     // Change owner of conversation
     conversation.ownerId = payload.ownerId;
-    await this.conversationRepository.save(conversation);
+    await this.conversationRepo.save(conversation);
 
     // Update old owner role to MEMBER (current user)
-    const currentUserParticipant = await this.participantRepository.findOne({
+    const currentUserParticipant = await this.participantRepo.findOne({
       where: { conversationId, userId },
     });
     currentUserParticipant!.role = ParticipantRole.MEMBER;
-    await this.participantRepository.save(currentUserParticipant!);
+    await this.participantRepo.save(currentUserParticipant!);
 
     // Update new owner role to OWNER
     newOwnerParticipant!.role = ParticipantRole.OWNER;
-    await this.participantRepository.save(newOwnerParticipant!);
+    await this.participantRepo.save(newOwnerParticipant!);
 
     // Emit socket event
     this.socketEmitterService.emitChangeOwnerOfGroup(conversation.id, {

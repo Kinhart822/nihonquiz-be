@@ -6,7 +6,7 @@ import {
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Emitter } from '@socket.io/redis-emitter';
 import * as redis from 'redis';
-import { SocketEventDto } from './dto/socket-emitter.dto';
+import { SocketEventDto } from './dtos/socket-emitter.dto';
 
 @Injectable()
 export class SocketEmitterService implements OnModuleInit {
