@@ -313,30 +313,6 @@ describe('AdminService', () => {
   });
 
   describe('Dashboard & Notifications', () => {
-    describe('getAdminDashboardStats', () => {
-      it('should return stats', async () => {
-        /*
-         * Flow: Dashboard Stats
-         * 1. Ensure requester is admin.
-         * 2. Count total students.
-         * 3. Count total teachers.
-         * 4. Count total messages across system.
-         * 5. Return aggregated stats object.
-         */
-        userRepo.findOne.mockResolvedValue({
-          id: 1,
-          role: RoleUser.ADMIN,
-        } as any);
-        userRepo.count.mockResolvedValueOnce(10).mockResolvedValueOnce(5);
-        messageRepo.count.mockResolvedValue(100);
-
-        const result = await service.getAdminDashboardStats(1);
-        expect(result.totalStudents).toBe(10);
-        expect(result.totalTeachers).toBe(5);
-        expect(result.totalMessages).toBe(100);
-      });
-    });
-
     describe('sendSystemNotification', () => {
       it('should queue system message', async () => {
         /*

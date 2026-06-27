@@ -8,11 +8,17 @@ import {
   httpBadRequest,
   httpNotFound,
 } from '@shared/exceptions/http-exception';
+import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
 
 // Mock Transactional Decorator
 jest.mock('typeorm-transactional', () => ({
   Transactional: () => () => ({}),
+}));
+
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
 }));
 
 describe('UserService', () => {
@@ -228,6 +234,71 @@ describe('UserService', () => {
       );
       expect(userRepo.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({ message: UPDATE_PROFILE_RES });
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should throw error if user not found', async () => {
+      /*
+       * Flow: Change Password - User Not Found
+       * 1. Query user by ID.
+       * 2. If user does not exist, throw NotFound exception.
+       */
+      userRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.changePassword(1, { oldPassword: 'old', newPassword: 'new' }),
+      ).rejects.toThrow(httpNotFound);
+    });
+
+    it('should throw error if user has no password', async () => {
+      /*
+       * Flow: Change Password - No Existing Password
+       * 1. Query user by ID.
+       * 2. If user exists but has no password (e.g. social login), throw BadRequest exception.
+       */
+      userRepo.findOne.mockResolvedValue({ id: 1 } as any);
+
+      await expect(
+        service.changePassword(1, { oldPassword: 'old', newPassword: 'new' }),
+      ).rejects.toThrow(httpBadRequest);
+    });
+
+    it('should throw error if old password does not match', async () => {
+      /*
+       * Flow: Change Password - Invalid Old Password
+       * 1. Query user by ID.
+       * 2. Compare provided old password with stored hashed password.
+       * 3. If mismatch, throw BadRequest exception.
+       */
+      userRepo.findOne.mockResolvedValue({ id: 1, password: 'hashed' } as any);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.changePassword(1, { oldPassword: 'old', newPassword: 'new' }),
+      ).rejects.toThrow(httpBadRequest);
+    });
+
+    it('should change password successfully', async () => {
+      /*
+       * Flow: Change Password - Success
+       * 1. Retrieve user and verify old password matches.
+       * 2. Hash the new password.
+       * 3. Update user entity and save to DB.
+       */
+      const mockUser = { id: 1, password: 'old_hashed' };
+      userRepo.findOne.mockResolvedValue(mockUser as any);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new_hashed');
+
+      const result = await service.changePassword(1, {
+        oldPassword: 'old',
+        newPassword: 'new',
+      });
+
+      expect(mockUser.password).toBe('new_hashed');
+      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
+      expect(result).toEqual({ message: 'Password changed successfully' });
     });
   });
 });

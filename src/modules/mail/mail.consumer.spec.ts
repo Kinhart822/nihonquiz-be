@@ -57,6 +57,12 @@ describe('MailConsumer', () => {
       }) as any;
 
     it('should process SIGN_UP and save email log successfully', async () => {
+      /*
+       * Flow: Process Sign Up Email Job
+       * 1. Receive job from BullMQ queue.
+       * 2. Call mailService.sendSignUpEmail.
+       * 3. On success, log execution in DB with 'SUCCESS' status.
+       */
       // Arrange
       const job = mockJob(IMailType.SIGN_UP);
       mockMailService.sendSignUpEmail.mockResolvedValue(undefined);
@@ -79,6 +85,12 @@ describe('MailConsumer', () => {
     });
 
     it('should process RESEND_EMAIL and save email log successfully', async () => {
+      /*
+       * Flow: Process Resend Email Job
+       * 1. Receive job from BullMQ queue.
+       * 2. Call mailService.sendResendCodeEmail.
+       * 3. On success, log execution in DB with 'SUCCESS' status.
+       */
       // Arrange
       const job = mockJob(IMailType.RESEND_EMAIL);
       mockMailService.sendResendCodeEmail.mockResolvedValue(undefined);
@@ -100,6 +112,12 @@ describe('MailConsumer', () => {
     });
 
     it('should process FORGOT_PASSWORD and save email log successfully', async () => {
+      /*
+       * Flow: Process Forgot Password Email Job
+       * 1. Receive job from BullMQ queue.
+       * 2. Call mailService.sendForgotPasswordEmail.
+       * 3. On success, log execution in DB with 'SUCCESS' status.
+       */
       // Arrange
       const job = mockJob(IMailType.FORGOT_PASSWORD);
       mockMailService.sendForgotPasswordEmail.mockResolvedValue(undefined);
@@ -121,6 +139,13 @@ describe('MailConsumer', () => {
     });
 
     it('should handle mail service failure, save FAILED status, and re-throw', async () => {
+      /*
+       * Flow: Process Job (Failure)
+       * 1. Receive job from BullMQ queue.
+       * 2. mailService throws error.
+       * 3. Log execution in DB with 'FAILED' status and error message.
+       * 4. Rethrow error for BullMQ to handle retries.
+       */
       // Arrange
       const job = mockJob(IMailType.SIGN_UP);
       const error = new Error('SMTP Error');
@@ -137,6 +162,11 @@ describe('MailConsumer', () => {
     });
 
     it('should return null for unknown mail type', async () => {
+      /*
+       * Flow: Process Unknown Job Type
+       * 1. Receive job with unsupported type.
+       * 2. Do nothing and return null.
+       */
       // Arrange
       const job = mockJob('UNKNOWN_TYPE' as any);
 

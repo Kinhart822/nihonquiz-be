@@ -45,6 +45,12 @@ describe('MessageController', () => {
 
   describe('getListByConversationId', () => {
     it('should call getConversationMessages', async () => {
+      /*
+       * Flow: Get Conversation Messages
+       * 1. Mock service.getConversationMessages.
+       * 2. Call controller.getListByConversationId with user, filters, and string ID.
+       * 3. Verify service is called with numeric ID and parameters.
+       */
       messageService.getConversationMessages.mockResolvedValue({} as any);
       const user = { id: 1 };
       const filter = { skip: 0 };
@@ -64,6 +70,12 @@ describe('MessageController', () => {
 
   describe('sendMessage', () => {
     it('should call sendMessage with files', async () => {
+      /*
+       * Flow: Send Message
+       * 1. Mock service.sendMessage.
+       * 2. Call controller.sendMessage with user, DTO, and files.
+       * 3. Verify service is called correctly.
+       */
       const mockResult = { id: 1 };
       messageService.sendMessage.mockResolvedValue(mockResult as any);
       const user = { id: 1 };
@@ -79,6 +91,12 @@ describe('MessageController', () => {
 
   describe('editMessage', () => {
     it('should call editMessage', async () => {
+      /*
+       * Flow: Edit Message
+       * 1. Mock service.editMessage.
+       * 2. Call controller.editMessage with user and DTO.
+       * 3. Verify service is called correctly.
+       */
       const mockResult = { id: 1 };
       messageService.editMessage.mockResolvedValue(mockResult as any);
       const user = { id: 1 };
@@ -101,6 +119,12 @@ describe('MessageController', () => {
 
   describe('markAsRead', () => {
     it('should call markAsRead', async () => {
+      /*
+       * Flow: Mark As Read
+       * 1. Mock service.markAsRead to return true.
+       * 2. Call controller.markAsRead with user and DTO.
+       * 3. Verify service is called correctly.
+       */
       messageService.markAsRead.mockResolvedValue(true);
       const user = { id: 1 };
       const dto: MarkAsReadDto = { conversationId: 1 };
@@ -114,6 +138,12 @@ describe('MessageController', () => {
 
   describe('pinMessage', () => {
     it('should call pinMessage', async () => {
+      /*
+       * Flow: Pin Message
+       * 1. Mock service.pinMessage to return true.
+       * 2. Call controller.pinMessage with user and DTO.
+       * 3. Verify service is called correctly.
+       */
       messageService.pinMessage.mockResolvedValue(true);
       const user = { id: 1 };
       const dto: PinMessageDto = { messageId: 1, conversationId: 1 };
@@ -127,6 +157,12 @@ describe('MessageController', () => {
 
   describe('unpinMessage', () => {
     it('should call unpinMessage', async () => {
+      /*
+       * Flow: Unpin Message
+       * 1. Mock service.unpinMessage to return true.
+       * 2. Call controller.unpinMessage with user and DTO.
+       * 3. Verify service is called correctly.
+       */
       messageService.unpinMessage.mockResolvedValue(true);
       const user = { id: 1 };
       const dto: UnpinMessageDto = { messageId: 1, conversationId: 1 };

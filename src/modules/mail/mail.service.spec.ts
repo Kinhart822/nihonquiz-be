@@ -67,6 +67,14 @@ describe('MailService', () => {
 
   describe('generateAndSendOTP', () => {
     it('should generate OTP, save to Redis, and add to queue', async () => {
+      /*
+       * Flow: Generate and Send OTP (Success)
+       * 1. Query Redis for current resend count.
+       * 2. Ensure count is below limit (< 3).
+       * 3. Generate new OTP token.
+       * 4. Save token and increment resend count in Redis.
+       * 5. Add email task to background job queue.
+       */
       // Arrange
       const email = 'test@example.com';
       const type = IMailType.SIGN_UP;
@@ -88,6 +96,11 @@ describe('MailService', () => {
     });
 
     it('should throw error if resend count >= 3', async () => {
+      /*
+       * Flow: Generate and Send OTP (Limit Reached)
+       * 1. Query Redis for current resend count.
+       * 2. If count >= 3, throw TOO_MANY_RESENDS exception.
+       */
       // Arrange
       const email = 'test@example.com';
       const type = IMailType.SIGN_UP;
@@ -110,6 +123,13 @@ describe('MailService', () => {
 
   describe('verifyOTP', () => {
     it('should return true and delete keys if OTP is valid and persist is false', async () => {
+      /*
+       * Flow: Verify OTP (Valid, Not Persist)
+       * 1. Query Redis for stored OTP.
+       * 2. Compare with provided OTP.
+       * 3. If matched and persist=false, delete OTP and resend count keys.
+       * 4. Return true.
+       */
       // Arrange
       redisService.get.mockResolvedValue('123456');
 
@@ -126,6 +146,13 @@ describe('MailService', () => {
     });
 
     it('should return true and NOT delete keys if persist is true', async () => {
+      /*
+       * Flow: Verify OTP (Valid, Persist)
+       * 1. Query Redis for stored OTP.
+       * 2. Compare with provided OTP.
+       * 3. If matched and persist=true, keep keys in Redis.
+       * 4. Return true.
+       */
       // Arrange
       redisService.get.mockResolvedValue('123456');
 
@@ -143,6 +170,12 @@ describe('MailService', () => {
     });
 
     it('should return false if OTP does not match', async () => {
+      /*
+       * Flow: Verify OTP (Invalid Match)
+       * 1. Query Redis for stored OTP.
+       * 2. Compare with provided OTP.
+       * 3. If no match, return false.
+       */
       // Arrange
       redisService.get.mockResolvedValue('123456');
 
@@ -159,6 +192,11 @@ describe('MailService', () => {
     });
 
     it('should return false if OTP does not exist', async () => {
+      /*
+       * Flow: Verify OTP (Not Found)
+       * 1. Query Redis for stored OTP.
+       * 2. If not found (null), return false.
+       */
       // Arrange
       redisService.get.mockResolvedValue(null);
 
@@ -177,6 +215,11 @@ describe('MailService', () => {
 
   describe('clearOTP', () => {
     it('should delete both OTP and resend count keys', async () => {
+      /*
+       * Flow: Clear OTP
+       * 1. Given email and type, call service.clearOTP.
+       * 2. Verify redis del is called for both token key and count key.
+       */
       // Act
       await service.clearOTP('test@example.com', IMailType.SIGN_UP);
 

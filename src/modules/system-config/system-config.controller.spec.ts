@@ -44,6 +44,12 @@ describe('SystemConfigController', () => {
 
   describe('getConfig', () => {
     it('should call getConfig on service', async () => {
+      /*
+       * Flow: Get Config By Key
+       * 1. Mock service.getConfig to return a config object.
+       * 2. Call controller.getConfig with the specified key.
+       * 3. Verify service method is called with correct key.
+       */
       const mockResult = { key: 'KEY', value: 'VAL' };
       service.getConfig.mockResolvedValue(mockResult as any);
 
@@ -55,6 +61,12 @@ describe('SystemConfigController', () => {
 
   describe('getSystemConfigs', () => {
     it('should call getSystemConfigs on service', async () => {
+      /*
+       * Flow: Get Paginated Configs
+       * 1. Mock service.getSystemConfigs to return paginated result.
+       * 2. Call controller.getSystemConfigs with filter DTO.
+       * 3. Verify service method is called with correct DTO.
+       */
       const mockResult = { data: [], meta: {} };
       service.getSystemConfigs.mockResolvedValue(mockResult as any);
 
@@ -67,6 +79,12 @@ describe('SystemConfigController', () => {
 
   describe('createSystemConfig', () => {
     it('should call createSystemConfig on service', async () => {
+      /*
+       * Flow: Create Config
+       * 1. Mock service.createSystemConfig to return new config object.
+       * 2. Call controller.createSystemConfig with creation DTO.
+       * 3. Verify service method is called with correct parameters.
+       */
       const mockResult = { key: 'KEY', value: 'VAL' };
       service.createSystemConfig.mockResolvedValue(mockResult as any);
 
@@ -79,6 +97,12 @@ describe('SystemConfigController', () => {
 
   describe('updateSystemConfig', () => {
     it('should call updateSystemConfig on service', async () => {
+      /*
+       * Flow: Update Config
+       * 1. Mock service.updateSystemConfig to return updated config object.
+       * 2. Call controller.updateSystemConfig with update DTO.
+       * 3. Verify service method is called with correct parameters.
+       */
       const mockResult = { key: 'KEY', value: 'NEW_VAL' };
       service.updateSystemConfig.mockResolvedValue(mockResult as any);
 
@@ -91,6 +115,12 @@ describe('SystemConfigController', () => {
 
   describe('deleteSystemConfig', () => {
     it('should call deleteSystemConfig on service', async () => {
+      /*
+       * Flow: Delete Config
+       * 1. Mock service.deleteSystemConfig to return deletion result.
+       * 2. Call controller.deleteSystemConfig with config key.
+       * 3. Verify service method is called with correct key.
+       */
       const mockResult = { affected: 1 };
       service.deleteSystemConfig.mockResolvedValue(mockResult as any);
 

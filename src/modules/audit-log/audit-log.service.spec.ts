@@ -39,6 +39,13 @@ describe('AuditLogService', () => {
 
   describe('getAuditLogs', () => {
     it('should return paginated audit logs', async () => {
+      /*
+       * Flow: Get Audit Logs (Paginated)
+       * 1. Mock repository to return paginated logs and total count.
+       * 2. Call service.getAuditLogs with filter parameters.
+       * 3. Map returned entities into PageDto structure.
+       * 4. Verify repository is called with correct parameters.
+       */
       // Arrange
       const filterDto = { page: 1, limit: 10 };
       const mockEntities = [{ id: 1, action: 'LOGIN', userId: 123 }];
@@ -65,6 +72,12 @@ describe('AuditLogService', () => {
 
   describe('getAuditLogInfo', () => {
     it('should return an audit log by id', async () => {
+      /*
+       * Flow: Get Audit Log Info (Success)
+       * 1. Mock repository to return a specific audit log.
+       * 2. Call service.getAuditLogInfo with the log ID.
+       * 3. Verify repository is called with correct ID.
+       */
       // Arrange
       const mockLog = { id: 1, action: 'LOGIN' };
       repository.findOne.mockResolvedValue(mockLog as any);
@@ -78,6 +91,12 @@ describe('AuditLogService', () => {
     });
 
     it('should throw NOT_FOUND if log does not exist', async () => {
+      /*
+       * Flow: Get Audit Log Info (Not Found)
+       * 1. Mock repository to return null.
+       * 2. Call service.getAuditLogInfo with a non-existent log ID.
+       * 3. Verify AUDIT_LOG_NOT_FOUND exception is thrown.
+       */
       // Arrange
       repository.findOne.mockResolvedValue(null);
 
@@ -93,6 +112,12 @@ describe('AuditLogService', () => {
 
   describe('createAuditLog', () => {
     it('should create and save an audit log successfully', async () => {
+      /*
+       * Flow: Create Audit Log (Success)
+       * 1. Create a new audit log entity with request payload.
+       * 2. Save the entity to the database.
+       * 3. Return the created audit log.
+       */
       // Arrange
       const payload = {
         userId: 1,
@@ -114,6 +139,12 @@ describe('AuditLogService', () => {
     });
 
     it('should return null and log error if save fails', async () => {
+      /*
+       * Flow: Create Audit Log (Failure)
+       * 1. Mock repository.save to throw an error (e.g., DB connection issue).
+       * 2. Call service.createAuditLog.
+       * 3. Catch error, log it, and return null instead of crashing.
+       */
       // Arrange
       const payload = {
         userId: 1,

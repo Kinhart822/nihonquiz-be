@@ -90,6 +90,11 @@ describe('AuthService', () => {
     };
 
     it('should throw error if email already exists', async () => {
+      /*
+       * Flow: Register - Email Exists
+       * 1. Query database for existing email.
+       * 2. If email exists, throw ACCOUNT_EXISTED error.
+       */
       userRepo.findOneBy.mockResolvedValue({ id: 1 } as any);
 
       await expect(service.register(dto)).rejects.toThrow(HttpException);
@@ -99,6 +104,11 @@ describe('AuthService', () => {
     });
 
     it('should throw error if username already exists', async () => {
+      /*
+       * Flow: Register - Username Exists
+       * 1. Query database for existing username.
+       * 2. If username exists, throw USERNAME_EXISTED error.
+       */
       userRepo.findOneBy.mockImplementation(async (query: any) => {
         if (query.username) return { id: 1 } as any;
         return null;
@@ -111,6 +121,14 @@ describe('AuthService', () => {
     });
 
     it('should successfully register user, hash password, save to redis and send OTP', async () => {
+      /*
+       * Flow: Register - Success
+       * 1. Verify email and username do not exist.
+       * 2. Check if OTP already exists to prevent spam.
+       * 3. Hash the provided password.
+       * 4. Cache user registration data in Redis.
+       * 5. Generate and send SIGN_UP OTP via email.
+       */
       userRepo.findOneBy.mockResolvedValue(null);
       mailService.isOTPExist.mockResolvedValue(false);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_pw');
@@ -132,6 +150,11 @@ describe('AuthService', () => {
     const code = '123456';
 
     it('should throw error if OTP is invalid', async () => {
+      /*
+       * Flow: Verify OTP - Invalid
+       * 1. Verify provided OTP against stored value.
+       * 2. If invalid or expired, throw INVALID_OTP error.
+       */
       mailService.verifyOTP.mockResolvedValue(false);
 
       await expect(
@@ -145,6 +168,13 @@ describe('AuthService', () => {
     });
 
     it('should verify SIGN_UP OTP and create user', async () => {
+      /*
+       * Flow: Verify OTP - SIGN_UP Success
+       * 1. Verify OTP successfully.
+       * 2. Retrieve cached registration data from Redis.
+       * 3. Create and save new User entity.
+       * 4. Delete registration data from Redis.
+       */
       mailService.verifyOTP.mockResolvedValue(true);
       redisService.get.mockResolvedValue({
         email,
@@ -171,6 +201,11 @@ describe('AuthService', () => {
     const dto = { email: 'test@example.com', password: 'password123' };
 
     it('should throw error if user not found', async () => {
+      /*
+       * Flow: Sign In - User Not Found
+       * 1. Query database for user by email.
+       * 2. If user does not exist, throw ACCOUNT_NOT_FOUND error.
+       */
       userRepo.findOneBy.mockResolvedValue(null);
 
       await expect(service.signIn(dto)).rejects.toThrow(HttpException);
@@ -180,6 +215,12 @@ describe('AuthService', () => {
     });
 
     it('should throw error if password does not match', async () => {
+      /*
+       * Flow: Sign In - Invalid Password
+       * 1. Query user by email.
+       * 2. Compare provided password with stored hashed password.
+       * 3. If password mismatch, throw INVALID_CREDENTIALS error.
+       */
       userRepo.findOneBy.mockResolvedValue({
         email: dto.email,
         password: 'hashed',
@@ -194,6 +235,13 @@ describe('AuthService', () => {
     });
 
     it('should generate tokens and login user', async () => {
+      /*
+       * Flow: Sign In - Success
+       * 1. Retrieve active user by email.
+       * 2. Verify password match.
+       * 3. Generate Access Token and Refresh Token.
+       * 4. Return tokens to client.
+       */
       const user = {
         id: 1,
         email: dto.email,
@@ -218,11 +266,22 @@ describe('AuthService', () => {
 
   describe('googleLogin', () => {
     it('should return null if req.user is empty', async () => {
+      /*
+       * Flow: Google Login - Empty Request
+       * 1. Check if user object exists in request (from Passport Google Strategy).
+       * 2. If empty, return null indicating failure.
+       */
       const result = await service.googleLogin({});
       expect(result).toBeNull();
     });
 
     it('should create new user if google user not found and login', async () => {
+      /*
+       * Flow: Google Login - New User
+       * 1. Query user by Google email.
+       * 2. If not found, create and save new User entity with Google ID.
+       * 3. Generate tokens for the new user.
+       */
       const req = { user: { email: 'g@example.com', googleId: '123' } };
       userRepo.findOneBy.mockResolvedValue(null);
       userRepo.create.mockReturnValue({
@@ -250,6 +309,11 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it('should throw error if user not found', async () => {
+      /*
+       * Flow: Forgot Password - User Not Found
+       * 1. Query database for user by email.
+       * 2. If user does not exist, throw ACCOUNT_NOT_FOUND error.
+       */
       userRepo.findOneBy.mockResolvedValue(null);
       await expect(
         service.forgotPassword({ email: 'x@ex.com' }),
@@ -257,6 +321,12 @@ describe('AuthService', () => {
     });
 
     it('should generate and send OTP', async () => {
+      /*
+       * Flow: Forgot Password - Success
+       * 1. Retrieve user by email and verify active status.
+       * 2. Ensure no duplicate OTP exists.
+       * 3. Generate and send FORGOT_PASSWORD OTP.
+       */
       userRepo.findOneBy.mockResolvedValue({
         id: 1,
         status: UserStatus.ACTIVE,
@@ -274,6 +344,13 @@ describe('AuthService', () => {
 
   describe('resetPassword', () => {
     it('should reset password if OTP is valid', async () => {
+      /*
+       * Flow: Reset Password - Success
+       * 1. Verify provided OTP.
+       * 2. Retrieve user by email.
+       * 3. Hash the new password and update user in database.
+       * 4. Clear the OTP to prevent reuse.
+       */
       mailService.verifyOTP.mockResolvedValue(true);
       userRepo.findOneBy.mockResolvedValue({
         id: 1,

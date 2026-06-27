@@ -16,6 +16,11 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
+      /*
+       * Flow: Get Hello
+       * 1. Call appController.getHello().
+       * 2. Verify it returns 'Hello World!'.
+       */
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
