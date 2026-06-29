@@ -48,6 +48,15 @@ export class SocketEmitterService implements OnModuleInit {
     }
   }
 
+  // ==================== QUESTION BANK ====================
+  emitQuestionImportCompleted(email: string, data: any): void {
+    this.emitEvent(email, SocketEvent.QUESTION_BANK_IMPORT_COMPLETED, data);
+  }
+
+  emitQuestionExportCompleted(email: string, data: any): void {
+    this.emitEvent(email, SocketEvent.QUESTION_BANK_EXPORT_COMPLETED, data);
+  }
+
   emitUserBlocked(email: string, data: any): void {
     this.emitEvent(email, SocketEvent.USER_BLOCKED, data);
   }

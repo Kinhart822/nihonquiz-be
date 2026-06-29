@@ -85,7 +85,10 @@ export class ClassService {
       return classEntity;
     }
 
-    throw new httpBadRequest('Invalid role', 'INVALID_ROLE');
+    throw new httpBadRequest(
+      httpErrors.INVALID_ROLE.message,
+      httpErrors.INVALID_ROLE.code,
+    );
   }
 
   // ==================== GET LIST ====================

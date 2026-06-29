@@ -407,4 +407,48 @@ export const httpErrors = {
     message: 'Kanji not found.',
     code: 'KANJI_NOT_FOUND',
   },
+
+  // General Access
+  UNAUTHORIZED_ACCESS: {
+    message: 'Unauthorized access to this resource.',
+    code: 'UNAUTHORIZED_ACCESS',
+  },
+
+  // Question Bank
+  QUESTION_NOT_FOUND: {
+    message: 'Question not found.',
+    code: 'QUESTION_NOT_FOUND',
+  },
+
+  // Mini Quiz
+  MINI_QUIZ_NOT_FOUND: {
+    message: 'Mini quiz not found.',
+    code: 'MINI_QUIZ_NOT_FOUND',
+  },
+
+  // Practice Test
+  PRACTICE_TEST_NOT_FOUND: {
+    message: 'Practice test not found.',
+    code: 'PRACTICE_TEST_NOT_FOUND',
+  },
+  INVALID_ROLE: {
+    message: 'Invalid role',
+    code: 'INVALID_ROLE',
+  },
+  ATTEMPT_NOT_FOUND: {
+    message: 'Test attempt not found',
+    code: 'ATTEMPT_NOT_FOUND',
+  },
+  ATTEMPT_ALREADY_SUBMITTED: {
+    message: 'Test attempt already submitted',
+    code: 'ATTEMPT_ALREADY_SUBMITTED',
+  },
+  INVALID_FILE: {
+    message: 'Invalid Excel file',
+    code: 'INVALID_FILE',
+  },
+  FILE_REQUIRED: {
+    message: 'File is required',
+    code: 'FILE_REQUIRED',
+  },
 };
