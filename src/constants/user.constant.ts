@@ -81,6 +81,20 @@ export enum MessageAttachmentStatus {
   DELETED = 'DELETED',
 }
 
+export enum AssignmentAttachmentType {
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  AUDIO = 'AUDIO',
+  FILE = 'FILE',
+}
+
+export enum AssignmentAttachmentStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING',
+  DELETED = 'DELETED',
+}
+
 export const REGISTER_RES = 'OTP for registration has been sent to your email.';
 export const FORGOT_PASSWORD_RES =
   'OTP for password reset has been sent to your email.';

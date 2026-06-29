@@ -11,6 +11,12 @@ DROP TABLE IF EXISTS "class_students" CASCADE;
 DROP TABLE IF EXISTS "class_schedules" CASCADE;
 DROP TABLE IF EXISTS "class_announcements" CASCADE;
 
+-- 1.5. Drop assignment-related tables
+DROP TABLE IF EXISTS "assignment_attachments" CASCADE;
+DROP TABLE IF EXISTS "assignment_submission_attachments" CASCADE;
+DROP TABLE IF EXISTS "assignment_submissions" CASCADE;
+DROP TABLE IF EXISTS "assignments" CASCADE;
+
 -- 2. Drop intermediate dependent tables
 DROP TABLE IF EXISTS "lessons" CASCADE;
 DROP TABLE IF EXISTS "classes" CASCADE;

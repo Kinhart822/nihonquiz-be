@@ -10,8 +10,11 @@ import { ConversationRepository } from '@repositories/conversation.repository';
 import { MessageAttachmentRepository } from '@repositories/message-attachment.repository';
 import { MessageRepository } from '@repositories/message.repository';
 import { UserRepository } from '@repositories/user.repository';
+import { AssignmentAttachmentRepository } from '@repositories/assignment-attachment.repository';
+import { AssignmentSubmissionAttachmentRepository } from '@repositories/assignment-submission-attachment.repository';
 import { Job } from 'bullmq';
 import { SocketEmitterService } from '../../modules/socket/socket-emitter.service';
+import { AssignmentAttachmentStatus } from '@constants/user.constant';
 
 @Processor(FILE_UPLOAD_QUEUE)
 export class FileUploadProcessor extends WorkerHost {
@@ -24,6 +27,8 @@ export class FileUploadProcessor extends WorkerHost {
     private readonly conversationRepo: ConversationRepository,
     private readonly userRepo: UserRepository,
     private readonly socketEmitterService: SocketEmitterService,
+    private readonly assignmentAttachmentRepo: AssignmentAttachmentRepository,
+    private readonly submissionAttachmentRepo: AssignmentSubmissionAttachmentRepository,
   ) {
     super();
   }
@@ -38,6 +43,10 @@ export class FileUploadProcessor extends WorkerHost {
         return this.handleUploadUserAvatar(job);
       case FILE_UPLOAD_JOB.UPLOAD_USER_BACKGROUND:
         return this.handleUploadUserBackground(job);
+      case FILE_UPLOAD_JOB.UPLOAD_ASSIGNMENT_ATTACHMENT:
+        return this.handleUploadAssignmentAttachment(job);
+      case FILE_UPLOAD_JOB.UPLOAD_SUBMISSION_ATTACHMENT:
+        return this.handleUploadSubmissionAttachment(job);
       default:
         this.logger.warn(`Unknown job name: ${job.name}`);
     }
@@ -229,6 +238,68 @@ export class FileUploadProcessor extends WorkerHost {
           status: MessageAttachmentStatus.FAILED,
         },
       });
+    }
+  }
+
+  // ==================== HANDLE UPLOAD ASSIGNMENT ATTACHMENT ====================
+  private async handleUploadAssignmentAttachment(job: Job<any>) {
+    const { attachmentId, file } = job.data;
+    const buffer = Buffer.from(file.buffer.data);
+    const multerFile: Express.Multer.File = {
+      ...file,
+      buffer,
+    } as any;
+
+    try {
+      const res = await this.cloudinaryService.uploadFile(multerFile);
+      const url = (res as any).secure_url;
+
+      await this.assignmentAttachmentRepo.update(attachmentId, {
+        url,
+        status: AssignmentAttachmentStatus.SUCCESS,
+      });
+
+      this.logger.log(`Assignment attachment uploaded: ${attachmentId}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to upload assignment attachment: ${attachmentId}`,
+        error,
+      );
+      await this.assignmentAttachmentRepo.update(attachmentId, {
+        status: AssignmentAttachmentStatus.FAILED,
+      });
+      throw error;
+    }
+  }
+
+  // ==================== HANDLE UPLOAD SUBMISSION ATTACHMENT ====================
+  private async handleUploadSubmissionAttachment(job: Job<any>) {
+    const { attachmentId, file } = job.data;
+    const buffer = Buffer.from(file.buffer.data);
+    const multerFile: Express.Multer.File = {
+      ...file,
+      buffer,
+    } as any;
+
+    try {
+      const res = await this.cloudinaryService.uploadFile(multerFile);
+      const url = (res as any).secure_url;
+
+      await this.submissionAttachmentRepo.update(attachmentId, {
+        url,
+        status: AssignmentAttachmentStatus.SUCCESS,
+      });
+
+      this.logger.log(`Submission attachment uploaded: ${attachmentId}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to upload submission attachment: ${attachmentId}`,
+        error,
+      );
+      await this.submissionAttachmentRepo.update(attachmentId, {
+        status: AssignmentAttachmentStatus.FAILED,
+      });
+      throw error;
     }
   }
 }

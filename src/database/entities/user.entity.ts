@@ -8,6 +8,8 @@ import {
   UserStatus,
 } from '../../constants/user.constant';
 import { BaseEntity } from '../../shared/base-entity';
+import { TestAttemptEntity } from './test-attempt.entity';
+import { AssignmentSubmissionEntity } from './assignment-submission.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
@@ -53,6 +55,15 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => ParticipantEntity, (participant) => participant.user)
   participants!: ParticipantEntity[];
+
+  @OneToMany(() => TestAttemptEntity, (attempt) => attempt.user)
+  testAttempts!: TestAttemptEntity[];
+
+  @OneToMany(
+    () => AssignmentSubmissionEntity,
+    (submission: AssignmentSubmissionEntity) => submission.student,
+  )
+  assignmentSubmissions!: AssignmentSubmissionEntity[];
 
   @OneToMany(() => ClassEntity, (classObj: ClassEntity) => classObj.teacher)
   classesTaught!: ClassEntity[];

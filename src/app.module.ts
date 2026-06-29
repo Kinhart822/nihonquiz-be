@@ -20,6 +20,7 @@ import { LessonModule } from './modules/lesson/lesson.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { PipeModule } from './pipes/pipe.module';
+import { AssignmentModule } from './modules/assignment/assignment.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { PipeModule } from './pipes/pipe.module';
     KanjiModule,
     LessonModule,
     VocabularyModule,
+    AssignmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

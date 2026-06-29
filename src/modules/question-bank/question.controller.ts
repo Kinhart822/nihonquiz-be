@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -8,33 +9,28 @@ import {
   Post,
   Put,
   Query,
-  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiConsumes,
-  ApiBody,
-  ApiProduces,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import express from 'express';
-import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
+import { AuthUser, RoleGuard } from '@shared/decorators/guard.decorator';
+import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { PageDto } from '@shared/dtos/page.dto';
-import { QuestionService } from './question.service';
 import {
   CreateQuestionDto,
-  UpdateQuestionDto,
   QuestionFilterDto,
+  UpdateQuestionDto,
 } from './dtos/question.req.dto';
 import { QuestionResDto } from './dtos/question.res.dto';
-import { AuthUser } from '@shared/decorators/guard.decorator';
-import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
+import { QuestionService } from './question.service';
 
 @ApiTags('Question Bank')
 @ApiBearerAuth()

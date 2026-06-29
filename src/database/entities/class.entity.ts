@@ -1,10 +1,11 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../shared/base-entity';
+import { AssignmentEntity } from './assignment.entity';
 import { ClassAnnouncementEntity } from './class-announcement.entity';
 import { ClassScheduleEntity } from './class-schedule.entity';
 import { ClassStudentEntity } from './class-student.entity';
-import { UserEntity } from './user.entity';
 import { CourseEntity } from './course.entity';
+import { UserEntity } from './user.entity';
 
 @Entity('classes')
 export class ClassEntity extends BaseEntity {
@@ -51,4 +52,10 @@ export class ClassEntity extends BaseEntity {
     (schedule: ClassScheduleEntity) => schedule.class,
   )
   schedules!: ClassScheduleEntity[];
+
+  @OneToMany(
+    () => AssignmentEntity,
+    (assignment: AssignmentEntity) => assignment.class,
+  )
+  assignments!: AssignmentEntity[];
 }

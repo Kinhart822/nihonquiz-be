@@ -85,10 +85,6 @@ export const httpErrors = {
     message: 'Entity not found.',
     code: 'ENTITY_NOT_FOUND',
   },
-  MISSING_TEST_OR_QUIZ_ID: {
-    message: 'Either Practice Test ID or Mini Quiz ID must be provided.',
-    code: 'MISSING_TEST_OR_QUIZ_ID',
-  },
 
   // User error
   INVALID_USER_ID: {
@@ -460,5 +456,29 @@ export const httpErrors = {
   FILE_REQUIRED: {
     message: 'File is required',
     code: 'FILE_REQUIRED',
+  },
+
+  // Assignment
+  ASSIGNMENT_NOT_FOUND: {
+    message: 'Assignment not found.',
+    code: 'ASSIGNMENT_NOT_FOUND',
+  },
+  SUBMISSION_NOT_FOUND: {
+    message: 'Submission not found.',
+    code: 'SUBMISSION_NOT_FOUND',
+  },
+  INVALID_DUE_DATE: {
+    message: 'Due date must be in the future.',
+    code: 'INVALID_DUE_DATE',
+  },
+  DEADLINE_PASSED: {
+    message: 'Assignment deadline has passed.',
+    code: 'DEADLINE_PASSED',
+  },
+
+  // Question
+  MISSING_TEST_OR_QUIZ_ID: {
+    message: 'Must provide either practiceTestId or miniQuizId.',
+    code: 'MISSING_TEST_OR_QUIZ_ID',
   },
 };

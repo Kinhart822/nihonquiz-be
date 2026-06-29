@@ -178,7 +178,7 @@ export class MessageController {
     return this.messageService.markAsRead(user.id, dto);
   }
 
-  // ==================== PIN MESSAGE =====================
+  // ==================== PIN MESSAGE ====================
   @Post('pin')
   @ApiOperation({ summary: 'Pin a message' })
   async pinMessage(
@@ -188,7 +188,7 @@ export class MessageController {
     return this.messageService.pinMessage(user.id, dto);
   }
 
-  // ==================== UNPIN MESSAGE ===================
+  // ==================== UNPIN MESSAGE ====================
   @Post('unpin')
   @ApiOperation({ summary: 'Unpin a message' })
   async unpinMessage(
