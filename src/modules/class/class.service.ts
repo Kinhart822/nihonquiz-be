@@ -43,7 +43,7 @@ export class ClassService {
     private readonly classScheduleRepo: ClassScheduleRepository,
   ) {}
 
-  // ==================== CHECK ACCESS HELPER ====================
+  // ==================== VALIDATION ====================
   private async checkClassAccess(user: JwtPayloadDto, classId: number) {
     const classEntity = await this.classRepo.findOne({
       where: { id: classId },

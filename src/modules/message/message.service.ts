@@ -60,7 +60,7 @@ export class MessageService {
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
   ) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   /**
    * Validate conversation
    */

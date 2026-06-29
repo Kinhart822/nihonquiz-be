@@ -31,7 +31,7 @@ export class PracticeTestService {
     private readonly questionRepo: QuestionRepository,
   ) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   private async validatePracticeTest(id: number) {
     const test = await this.practiceTestRepo.getEntityById(id);
     if (!test) {

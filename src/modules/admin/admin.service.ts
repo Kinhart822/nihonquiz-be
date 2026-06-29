@@ -408,7 +408,7 @@ export class AdminService {
     return true;
   }
 
-  // ==================== HELPERS ====================
+  // ==================== VALIDATION ====================
 
   /**
    * Validate that an admin exists

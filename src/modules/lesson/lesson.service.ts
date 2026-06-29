@@ -15,7 +15,7 @@ import { httpNotFound, httpErrors } from '@shared/exceptions/http-exception';
 export class LessonService {
   constructor(private readonly lessonRepo: LessonRepository) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   private async validateLesson(id: number) {
     const lesson = await this.lessonRepo.getEntityById(id);
     if (!lesson) {

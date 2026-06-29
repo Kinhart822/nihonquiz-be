@@ -19,7 +19,7 @@ export class VocabularyService {
     private readonly lessonRepo: LessonRepository,
   ) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   private async validateLesson(lessonId: number) {
     const lesson = await this.lessonRepo.getEntityById(lessonId);
     if (!lesson) {

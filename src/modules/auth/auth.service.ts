@@ -55,7 +55,7 @@ export class AuthService {
     private readonly redisService: RedisService,
   ) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   // Hash password
   async hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 12);

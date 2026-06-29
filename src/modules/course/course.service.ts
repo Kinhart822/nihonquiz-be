@@ -15,7 +15,7 @@ import { CourseResDto } from './dtos/course.res.dto';
 export class CourseService {
   constructor(private readonly courseRepo: CourseRepository) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   private async validateCourse(id: number) {
     const course = await this.courseRepo.getEntityById(id);
     if (!course) {

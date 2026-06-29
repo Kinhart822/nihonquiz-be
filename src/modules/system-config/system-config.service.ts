@@ -16,7 +16,7 @@ import { SystemConfigFilterDto } from './dtos/system-config.req.dto';
 export class SystemConfigService {
   constructor(private readonly systemConfigRepo: SystemConfigRepository) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   /**
    * Validate key
    */

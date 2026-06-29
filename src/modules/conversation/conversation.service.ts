@@ -62,7 +62,7 @@ export class ConversationService {
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
   ) {}
 
-  // ==================== Helper Methods ====================
+  // ==================== VALIDATION ====================
   /**
    * Validate conversation
    */

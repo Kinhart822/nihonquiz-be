@@ -35,7 +35,7 @@ export class QuestionService {
     @InjectQueue(QUESTION_BANK_QUEUE) private readonly questionBankQueue: Queue,
   ) {}
 
-  // ==================== HELPER METHODS ====================
+  // ==================== VALIDATION ====================
   private async validateQuestion(id: number) {
     const question = await this.questionRepo.findOne({
       where: { id },
@@ -54,8 +54,8 @@ export class QuestionService {
   async createQuestion(dto: CreateQuestionDto): Promise<QuestionResDto> {
     if (!dto.practiceTestId && !dto.miniQuizId) {
       throw new httpBadRequest(
-        'Must provide either practiceTestId or miniQuizId',
-        'BAD_REQUEST',
+        httpErrors.MISSING_TEST_OR_QUIZ_ID.message,
+        httpErrors.MISSING_TEST_OR_QUIZ_ID.code,
       );
     }
 
@@ -204,8 +204,8 @@ export class QuestionService {
   ): Promise<{ importedCount: number }> {
     if (!practiceTestId && !miniQuizId) {
       throw new httpBadRequest(
-        'Must provide either practiceTestId or miniQuizId',
-        'BAD_REQUEST',
+        httpErrors.MISSING_TEST_OR_QUIZ_ID.message,
+        httpErrors.MISSING_TEST_OR_QUIZ_ID.code,
       );
     }
 
