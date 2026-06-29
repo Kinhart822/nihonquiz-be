@@ -34,7 +34,7 @@ export class KanjiController {
 
   // ==================== CREATE ====================
   @Post()
-  @RoleGuard(RoleUser.ADMIN, RoleUser.TEACHER)
+  @RoleGuard(RoleUser.ADMIN)
   @ApiOperation({ summary: 'Create kanji' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -46,19 +46,18 @@ export class KanjiController {
   }
 
   // ==================== GET LIST ====================
-  @Get('lesson/:lessonId')
+  @Get()
   @RoleGuard(RoleUser.ADMIN, RoleUser.TEACHER, RoleUser.STUDENT)
-  @ApiOperation({ summary: 'Get kanjis by lesson' })
+  @ApiOperation({ summary: 'Get kanjis' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: KanjiResDto,
     description: 'List of kanjis returned successfully',
   })
-  async getKanjisByLesson(
-    @Param('lessonId') lessonId: string,
+  async getAllKanjis(
     @Query() filterDto: KanjiFilterDto,
   ): Promise<PageDto<KanjiResDto>> {
-    return this.kanjiService.getKanjisByLesson(+lessonId, filterDto);
+    return this.kanjiService.getAllKanjis(filterDto);
   }
 
   // ==================== GET INFO ====================
@@ -76,7 +75,7 @@ export class KanjiController {
 
   // ==================== UPDATE ====================
   @Put(':id')
-  @RoleGuard(RoleUser.ADMIN, RoleUser.TEACHER)
+  @RoleGuard(RoleUser.ADMIN)
   @ApiOperation({ summary: 'Update kanji' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -92,7 +91,7 @@ export class KanjiController {
 
   // ==================== DELETE ====================
   @Delete(':id')
-  @RoleGuard(RoleUser.ADMIN, RoleUser.TEACHER)
+  @RoleGuard(RoleUser.ADMIN)
   @ApiOperation({ summary: 'Delete kanji' })
   @ApiResponse({
     status: HttpStatus.OK,

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PageOptionsDto } from '@shared/dtos/page-option.dto';
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class KanjiFilterDto extends PageOptionsDto {
   @ApiPropertyOptional()
@@ -10,11 +10,6 @@ export class KanjiFilterDto extends PageOptionsDto {
 }
 
 export class CreateKanjiDto {
-  @ApiProperty()
-  @IsInt()
-  @IsNotEmpty()
-  lessonId!: number;
-
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

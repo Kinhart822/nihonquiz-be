@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { KanjiRepository } from '@database/repository/kanji.repository';
-import { LessonRepository } from '@database/repository/lesson.repository';
 import {
   CreateKanjiDto,
   UpdateKanjiDto,
@@ -14,22 +13,7 @@ import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class KanjiService {
-  constructor(
-    private readonly kanjiRepo: KanjiRepository,
-    private readonly lessonRepo: LessonRepository,
-  ) {}
-
-  // ==================== VALIDATION ====================
-  private async validateLesson(lessonId: number) {
-    const lesson = await this.lessonRepo.getEntityById(lessonId);
-    if (!lesson) {
-      throw new httpNotFound(
-        httpErrors.LESSON_NOT_FOUND.message,
-        httpErrors.LESSON_NOT_FOUND.code,
-      );
-    }
-    return lesson;
-  }
+  constructor(private readonly kanjiRepo: KanjiRepository) {}
 
   private async validateKanji(id: number) {
     const kanji = await this.kanjiRepo.getEntityById(id);
@@ -44,7 +28,6 @@ export class KanjiService {
 
   // ==================== CREATE ====================
   async createKanji(dto: CreateKanjiDto): Promise<KanjiResDto> {
-    await this.validateLesson(dto.lessonId);
     const kanji = await this.kanjiRepo.createEntity(dto);
     return plainToInstance(KanjiResDto, kanji, {
       excludeExtraneousValues: true,
@@ -52,15 +35,9 @@ export class KanjiService {
   }
 
   // ==================== GET LIST ====================
-  async getKanjisByLesson(
-    lessonId: number,
-    filterDto: KanjiFilterDto,
-  ): Promise<PageDto<KanjiResDto>> {
-    await this.validateLesson(lessonId);
-    const { entities, total } = await this.kanjiRepo.getKanjisWithFilters(
-      lessonId,
-      filterDto,
-    );
+  async getAllKanjis(filterDto: KanjiFilterDto): Promise<PageDto<KanjiResDto>> {
+    const { entities, total } =
+      await this.kanjiRepo.getKanjisWithFilters(filterDto);
     const meta = new PageMetaDto(filterDto, total);
     const data = plainToInstance(KanjiResDto, entities, {
       excludeExtraneousValues: true,

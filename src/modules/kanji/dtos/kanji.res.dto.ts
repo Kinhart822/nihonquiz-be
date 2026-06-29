@@ -8,10 +8,6 @@ export class KanjiResDto {
 
   @ApiProperty()
   @Expose()
-  lessonId!: number;
-
-  @ApiProperty()
-  @Expose()
   character!: string;
 
   @ApiPropertyOptional()

@@ -5,13 +5,11 @@ import { KanjiFilterDto } from '@modules/kanji/dtos/kanji.req.dto';
 
 @CustomRepository(KanjiEntity)
 export class KanjiRepository extends BaseRepository<KanjiEntity> {
-  async getKanjisWithFilters(lessonId: number, filterDto: KanjiFilterDto) {
+  async getKanjisWithFilters(filterDto: KanjiFilterDto) {
     const queryBuilder = this.createQueryBuilder('kanji');
 
-    queryBuilder.where('kanji.lessonId = :lessonId', { lessonId });
-
     if (filterDto.keyword) {
-      queryBuilder.andWhere(
+      queryBuilder.where(
         '(kanji.character ILIKE :keyword OR kanji.onyomi ILIKE :keyword OR kanji.kunyomi ILIKE :keyword OR kanji.meaning ILIKE :keyword)',
         { keyword: `%${filterDto.keyword}%` },
       );

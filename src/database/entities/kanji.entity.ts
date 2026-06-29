@@ -1,12 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '../../shared/base-entity';
-import { LessonEntity } from './lesson.entity';
 
 @Entity('kanjis')
 export class KanjiEntity extends BaseEntity {
-  @Column({ name: 'lesson_id', type: 'int' })
-  lessonId!: number;
-
   @Column({ name: 'character', type: 'varchar', length: 50 })
   character!: string;
 
@@ -21,8 +17,4 @@ export class KanjiEntity extends BaseEntity {
 
   @Column({ name: 'examples', type: 'text', nullable: true })
   examples!: string | null;
-
-  @ManyToOne(() => LessonEntity, (lesson) => lesson.kanjis)
-  @JoinColumn({ name: 'lesson_id' })
-  lesson!: LessonEntity;
 }

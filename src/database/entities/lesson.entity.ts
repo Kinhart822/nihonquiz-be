@@ -2,7 +2,6 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../shared/base-entity';
 import { CourseEntity } from './course.entity';
 import { GrammarEntity } from './grammar.entity';
-import { KanjiEntity } from './kanji.entity';
 import { VocabularyEntity } from './vocabulary.entity';
 
 @Entity('lessons')
@@ -28,7 +27,4 @@ export class LessonEntity extends BaseEntity {
 
   @OneToMany(() => GrammarEntity, (grammar) => grammar.lesson)
   grammars!: GrammarEntity[];
-
-  @OneToMany(() => KanjiEntity, (kanji) => kanji.lesson)
-  kanjis!: KanjiEntity[];
 }
