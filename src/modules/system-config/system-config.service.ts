@@ -78,11 +78,10 @@ export class SystemConfigService {
         httpErrors.SYSTEM_CONFIG_ALREADY_EXISTED.code,
       );
     }
-    const newConfig = this.systemConfigRepo.create({
+    return this.systemConfigRepo.createEntity({
       key,
       value,
     });
-    return this.systemConfigRepo.save(newConfig);
   }
 
   // ==================== UPDATE ====================
@@ -94,8 +93,7 @@ export class SystemConfigService {
         httpErrors.SYSTEM_CONFIG_NOT_FOUND.code,
       );
     }
-    config.value = value;
-    return this.systemConfigRepo.save(config);
+    return this.systemConfigRepo.updateEntity(config, { value });
   }
 
   // ==================== DELETE ====================
@@ -107,6 +105,6 @@ export class SystemConfigService {
         httpErrors.SYSTEM_CONFIG_NOT_FOUND.code,
       );
     }
-    return this.systemConfigRepo.delete({ key: config.key });
+    return this.systemConfigRepo.deleteEntitiesByCondition({ key: config.key });
   }
 }

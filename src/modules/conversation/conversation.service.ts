@@ -346,13 +346,12 @@ export class ConversationService {
     }
 
     // Create conversation
-    const conversation = await this.conversationRepo.create({
+    const conversation = await this.conversationRepo.createEntity({
       name,
       avatarUrl,
       type,
       ownerId: userId,
     });
-    await this.conversationRepo.save(conversation);
 
     if (file) {
       await this.fileUploadQueue.add(
@@ -370,17 +369,8 @@ export class ConversationService {
     }
 
     // Create Participants
-    const currentParticipant = await this.participantRepo.create({
-      conversationId: conversation.id,
-      userId,
-      role: ParticipantRole.OWNER,
-      status: ParticipantStatus.ACTIVE,
-      joinedAt: new Date(),
-      unreadCount: 0,
-      lastReadSeq: 0,
-    });
-    const participantList = participants.map((participant) => {
-      return this.participantRepo.create({
+    const participantListData = participants.map((participant) => {
+      return {
         conversationId: conversation.id,
         userId: participant,
         role: ParticipantRole.MEMBER,
@@ -388,9 +378,21 @@ export class ConversationService {
         joinedAt: new Date(),
         unreadCount: 0,
         lastReadSeq: 0,
-      });
+      };
     });
-    await this.participantRepo.save([currentParticipant, ...participantList]);
+
+    await this.participantRepo.createEntities([
+      {
+        conversationId: conversation.id,
+        userId,
+        role: ParticipantRole.OWNER,
+        status: ParticipantStatus.ACTIVE,
+        joinedAt: new Date(),
+        unreadCount: 0,
+        lastReadSeq: 0,
+      },
+      ...participantListData,
+    ]);
 
     // Emit socket event
     this.socketEmitterService.emitCreateConversation(
@@ -438,7 +440,7 @@ export class ConversationService {
       );
     }
     if (payload.type) conversation.type = payload.type;
-    await this.conversationRepo.save(conversation);
+    await this.conversationRepo.updateEntity(conversation, {});
 
     // Emit socket event
     this.socketEmitterService.emitEditConversation(
@@ -462,7 +464,7 @@ export class ConversationService {
       );
     }
     participant.status = ParticipantStatus.ARCHIVED;
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitArchiveConversation(
@@ -481,7 +483,7 @@ export class ConversationService {
     // Unarchive
     if (participant.status === ParticipantStatus.ARCHIVED) {
       participant.status = ParticipantStatus.ACTIVE;
-      await this.participantRepo.save(participant);
+      await this.participantRepo.updateEntity(participant, {});
     } else {
       throw new httpBadRequest(
         httpErrors.CONVERSATION_NOT_ARCHIVED.message,
@@ -523,7 +525,7 @@ export class ConversationService {
 
     participant.muteUntil = muteUntil;
     participant.isMuted = true;
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitMuteConversation(
@@ -542,7 +544,7 @@ export class ConversationService {
     // Unmute conversation
     participant.isMuted = false;
     participant.muteUntil = null;
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitUnmuteConversation(
@@ -569,7 +571,7 @@ export class ConversationService {
     // Pin conversation
     participant.isPinned = true;
     participant.pinnedAt = new Date();
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitPinConversation(
@@ -596,7 +598,7 @@ export class ConversationService {
     // Unpin conversation
     participant.isPinned = false;
     participant.pinnedAt = null;
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitUnpinConversation(
@@ -1093,11 +1095,11 @@ export class ConversationService {
           existingParticipant.role = ParticipantRole.MEMBER;
           existingParticipant.joinedAt = new Date();
           existingParticipant.leftAt = null;
-          await this.participantRepo.save(existingParticipant);
+          await this.participantRepo.updateEntity(existingParticipant, {});
         }
       } else {
         // Add new participant
-        const newParticipant = this.participantRepo.create({
+        await this.participantRepo.createEntity({
           conversationId: joinRequestData.conversationId,
           userId: joinRequestData.userId,
           role: ParticipantRole.MEMBER,
@@ -1106,7 +1108,6 @@ export class ConversationService {
           unreadCount: 0,
           lastReadSeq: 0,
         });
-        await this.participantRepo.save(newParticipant);
       }
 
       // Notify the conversation
@@ -1167,7 +1168,7 @@ export class ConversationService {
     // Leave group
     participant.status = ParticipantStatus.LEFT;
     participant.leftAt = new Date();
-    await this.participantRepo.save(participant);
+    await this.participantRepo.updateEntity(participant, {});
 
     // Emit socket event
     this.socketEmitterService.emitLeaveGroup(
@@ -1196,18 +1197,18 @@ export class ConversationService {
 
     // Change owner of conversation
     conversation.ownerId = payload.ownerId;
-    await this.conversationRepo.save(conversation);
+    await this.conversationRepo.updateEntity(conversation, {});
 
     // Update old owner role to MEMBER (current user)
     const currentUserParticipant = await this.participantRepo.findOne({
       where: { conversationId, userId },
     });
     currentUserParticipant!.role = ParticipantRole.MEMBER;
-    await this.participantRepo.save(currentUserParticipant!);
+    await this.participantRepo.updateEntity(currentUserParticipant!, {});
 
     // Update new owner role to OWNER
     newOwnerParticipant!.role = ParticipantRole.OWNER;
-    await this.participantRepo.save(newOwnerParticipant!);
+    await this.participantRepo.updateEntity(newOwnerParticipant!, {});
 
     // Emit socket event
     this.socketEmitterService.emitChangeOwnerOfGroup(conversation.id, {

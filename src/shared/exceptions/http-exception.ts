@@ -80,6 +80,16 @@ export const httpErrors = {
     code: 'BAD_REQUEST',
   },
 
+  // General/Database
+  ENTITY_NOT_FOUND: {
+    message: 'Entity not found.',
+    code: 'ENTITY_NOT_FOUND',
+  },
+  MISSING_TEST_OR_QUIZ_ID: {
+    message: 'Either Practice Test ID or Mini Quiz ID must be provided.',
+    code: 'MISSING_TEST_OR_QUIZ_ID',
+  },
+
   // User error
   INVALID_USER_ID: {
     message: 'Invalid user ID.',

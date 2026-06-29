@@ -433,7 +433,7 @@ export class MessageService {
     const messageType = hasFiles ? MessageType.ATTACHMENT : MessageType.TEXT;
 
     // Create message
-    const message = this.messageRepo.create({
+    const message = await this.messageRepo.createEntity({
       sequence: Number(conversation.lastMessageSeq || 0) + 1,
       conversationId: dto.conversationId,
       senderParticipantId: senderParticipant.id,
@@ -442,8 +442,6 @@ export class MessageService {
       status: MessageStatus.SENT,
       replyToMessageId: dto.replyToMessageId,
     });
-
-    await this.messageRepo.save(message);
     message.attachments = [];
     message.pins = [];
     message.replyToMessage = parentMessage as MessageEntity;
@@ -460,18 +458,21 @@ export class MessageService {
       }
 
       // Create message_attachments with PENDING status
-      const messageAttachments = files.map((file) => {
-        return this.messageAttachmentRepo.create({
+      const messageAttachmentsData = files.map((file) => {
+        return {
           messageId: message.id,
           type: MessageAttachmentType.FILE,
           status: MessageAttachmentStatus.PENDING,
           name: file.originalname,
           size: file.size,
           mimeType: file.mimetype,
-        });
+        };
       });
 
-      await this.messageAttachmentRepo.save(messageAttachments);
+      const messageAttachments =
+        await this.messageAttachmentRepo.createEntities(
+          messageAttachmentsData as any,
+        );
       message.attachments = messageAttachments;
 
       // Add jobs to queue for background upload
@@ -497,13 +498,13 @@ export class MessageService {
     );
 
     // Update conversation
-    await this.conversationRepo.update(dto.conversationId, {
+    await this.conversationRepo.updateEntityById(dto.conversationId, {
       lastMessageId: message.id,
       lastMessageSeq: message.sequence,
       lastMessagePreview: preview,
       lastMessageType: message.type,
       lastMessageSenderId: senderParticipant.id,
-      lastMessageAt: message.createdAt,
+      lastMessageAt: new Date(),
     });
 
     // Increment unread count for other participants
@@ -594,7 +595,7 @@ export class MessageService {
     if (hasFiles) {
       // Delete old attachments from DB
       if (message.attachments.length > 0) {
-        await this.messageAttachmentRepo.delete({
+        await this.messageAttachmentRepo.deleteEntitiesByCondition({
           messageId: message.id,
         });
       }
@@ -610,18 +611,20 @@ export class MessageService {
       }
 
       // Create message_attachments with PENDING status
-      const newAttachments = files.map((file) => {
-        return this.messageAttachmentRepo.create({
+      const newAttachmentsData = files.map((file) => {
+        return {
           messageId: message.id,
           type: MessageAttachmentType.FILE,
           status: MessageAttachmentStatus.PENDING,
           name: file.originalname,
           size: file.size,
           mimeType: file.mimetype,
-        });
+        };
       });
 
-      await this.messageAttachmentRepo.save(newAttachments);
+      const newAttachments = await this.messageAttachmentRepo.createEntities(
+        newAttachmentsData as any,
+      );
       message.attachments = newAttachments;
       message.type = MessageType.ATTACHMENT;
 
@@ -649,7 +652,7 @@ export class MessageService {
     message.editCount += 1;
     message.isEdited = true;
     message.editedAt = new Date();
-    await this.messageRepo.save(message);
+    await this.messageRepo.updateEntity(message, {});
 
     // Determine preview text for conversation update
     const preview = this.generateMessagePreview(
@@ -663,7 +666,7 @@ export class MessageService {
     });
 
     if (conversation && conversation.lastMessageId === message.id) {
-      await this.conversationRepo.update(message.conversationId, {
+      await this.conversationRepo.updateEntityById(message.conversationId, {
         lastMessagePreview: preview,
         lastMessageType: message.type,
       });
@@ -750,13 +753,12 @@ export class MessageService {
     await this.validateMessageIsNotPinned(message);
 
     // Create message pin
-    const messagePin = this.messagePinRepo.create({
+    const messagePin = await this.messagePinRepo.createEntity({
       conversationId: message.conversationId,
       messageId: message.id,
       pinnedAt: new Date(),
       pinnedByParticipantId: participant.id,
     });
-    await this.messagePinRepo.save(messagePin);
 
     // Emit message to conversation room
     this.socketEmitterService.emitPinMessage(
@@ -797,7 +799,7 @@ export class MessageService {
     }
 
     // Delete message PIN
-    await this.messagePinRepo.delete({
+    await this.messagePinRepo.deleteEntitiesByCondition({
       messageId: message.id,
     });
 

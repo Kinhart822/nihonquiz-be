@@ -1,17 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import {
+  httpErrors,
+  httpNotFound,
+} from '../../shared/exceptions/http-exception';
+import {
+  DeepPartial,
+  FindOptionsRelations,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { BaseEntity } from '../../shared/base-entity';
 
 @Injectable()
 export class BaseRepository<T extends BaseEntity> extends Repository<T> {
-  async getAllEntity(
-    relations: string[] = [],
-    throwsException = false,
-  ): Promise<T[]> {
-    const entities = await this.find({ relations: relations as any });
+  async getAllEntity(relations: FindOptionsRelations<T> = {}): Promise<T[]> {
+    return this.find({ relations });
+  }
 
-    if (entities.length === 0 && throwsException) {
-      throw new NotFoundException('Model not found');
+  async getAllEntityOrFail(
+    relations: FindOptionsRelations<T> = {},
+  ): Promise<T[]> {
+    const entities = await this.getAllEntity(relations);
+
+    if (entities.length === 0) {
+      throw new httpNotFound(
+        `${this.metadata.name} not found`,
+        httpErrors.ENTITY_NOT_FOUND.code,
+      );
     }
 
     return entities;
@@ -19,16 +34,25 @@ export class BaseRepository<T extends BaseEntity> extends Repository<T> {
 
   async getEntityById(
     id: string | number,
-    relations: string[] = [],
-    throwsException = false,
+    relations: FindOptionsRelations<T> = {},
   ): Promise<T | null> {
-    const entity = await this.findOne({
-      where: { id } as any,
-      relations: relations as any,
+    return this.findOne({
+      where: { id } as FindOptionsWhere<T>,
+      relations,
     });
+  }
 
-    if (!entity && throwsException) {
-      throw new NotFoundException('Model not found');
+  async getEntityByIdOrFail(
+    id: string | number,
+    relations: FindOptionsRelations<T> = {},
+  ): Promise<T> {
+    const entity = await this.getEntityById(id, relations);
+
+    if (!entity) {
+      throw new httpNotFound(
+        `${this.metadata.name} not found`,
+        httpErrors.ENTITY_NOT_FOUND.code,
+      );
     }
 
     return entity;
@@ -36,38 +60,76 @@ export class BaseRepository<T extends BaseEntity> extends Repository<T> {
 
   async createEntity(
     inputs: DeepPartial<T>,
-    relations: string[] = [],
+    relations: FindOptionsRelations<T> = {},
   ): Promise<T> {
     const savedEntity = await this.save(inputs);
 
-    // If specific relations are requested, we need to fetch the entity again to load them
-    if (relations.length > 0) {
-      const foundEntity = await this.getEntityById(savedEntity.id, relations);
-      if (foundEntity) {
-        return foundEntity;
-      }
+    return Object.keys(relations).length > 0
+      ? this.getEntityByIdOrFail(savedEntity.id, relations)
+      : savedEntity;
+  }
+
+  async createEntities(
+    inputs: DeepPartial<T>[],
+    chunkSize = 1000,
+  ): Promise<T[]> {
+    if (inputs.length === 0) {
+      return [];
     }
 
-    return savedEntity;
+    return this.save(inputs, { chunk: chunkSize });
+  }
+
+  async bulkInsert(
+    inputs: DeepPartial<T>[],
+    chunkSize = 1000,
+  ): Promise<number> {
+    if (inputs.length === 0) {
+      return 0;
+    }
+
+    let insertedCount = 0;
+
+    for (let i = 0; i < inputs.length; i += chunkSize) {
+      const chunk = inputs.slice(i, i + chunkSize);
+      const result = await this.insert(chunk as any);
+
+      insertedCount += result.identifiers.length;
+    }
+
+    return insertedCount;
   }
 
   async updateEntity(
     entity: T,
     inputs: DeepPartial<T>,
-    relations: string[] = [],
+    relations: FindOptionsRelations<T> = {},
   ): Promise<T> {
-    await this.update(entity.id, inputs as any);
+    const mergedEntity = this.merge(entity, inputs);
+    const savedEntity = await this.save(mergedEntity);
 
-    const updatedEntity = await this.getEntityById(entity.id, relations);
-    if (!updatedEntity) {
-      throw new NotFoundException('Model not found after update');
-    }
+    return Object.keys(relations).length > 0
+      ? this.getEntityByIdOrFail(savedEntity.id, relations)
+      : savedEntity;
+  }
 
-    return updatedEntity;
+  async updateEntityById(
+    id: number | string,
+    inputs: DeepPartial<T>,
+  ): Promise<boolean> {
+    const result = await this.update(id, inputs as any);
+    return Number(result.affected) > 0;
   }
 
   async deleteEntityById(id: number | string): Promise<boolean> {
     const result = await this.delete(id);
-    return !!result.affected && result.affected > 0;
+    return Number(result.affected) > 0;
+  }
+
+  async deleteEntitiesByCondition(
+    condition: FindOptionsWhere<T>,
+  ): Promise<boolean> {
+    const result = await this.delete(condition);
+    return Number(result.affected) > 0;
   }
 }

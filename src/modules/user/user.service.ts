@@ -26,7 +26,7 @@ export class UserService {
 
   // ==================== GET PROFILE ====================
   async getProfile(userId: number): Promise<UserResDto> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.getEntityById(userId);
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -47,7 +47,7 @@ export class UserService {
     backgroundFile?: Express.Multer.File,
   ) {
     // Check user exists
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.getEntityById(userId);
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -117,7 +117,7 @@ export class UserService {
       });
     }
 
-    await this.userRepo.save(user!);
+    await this.userRepo.updateEntity(user!, {});
 
     // Return message
     return {
@@ -128,7 +128,7 @@ export class UserService {
   // ==================== CHANGE PASSWORD ====================
   @Transactional()
   async changePassword(userId: number, payload: ChangePasswordDto) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.getEntityById(userId);
     if (!user) {
       throw new httpNotFound(
         httpErrors.ACCOUNT_NOT_FOUND.message,
@@ -153,7 +153,7 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
     user.password = hashedPassword;
-    await this.userRepo.save(user);
+    await this.userRepo.updateEntity(user, {});
 
     return { message: 'Password changed successfully' };
   }

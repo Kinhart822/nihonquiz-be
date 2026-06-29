@@ -96,15 +96,13 @@ export class PracticeTestService {
   async startTest(userId: number, testId: number): Promise<TestAttemptResDto> {
     await this.validatePracticeTest(testId);
 
-    const attempt = this.testAttemptRepo.create({
+    const attempt = await this.testAttemptRepo.createEntity({
       userId,
       practiceTestId: testId,
       score: 0,
       totalScore: 0,
       details: {},
     });
-
-    await this.testAttemptRepo.save(attempt);
     return plainToInstance(TestAttemptResDto, attempt, {
       excludeExtraneousValues: true,
     });
@@ -170,7 +168,7 @@ export class PracticeTestService {
     attempt.completedAt = new Date();
     attempt.details = details;
 
-    await this.testAttemptRepo.save(attempt);
+    await this.testAttemptRepo.updateEntity(attempt, {});
 
     return plainToInstance(TestAttemptResDto, attempt, {
       excludeExtraneousValues: true,

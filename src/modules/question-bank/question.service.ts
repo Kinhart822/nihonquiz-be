@@ -79,8 +79,7 @@ export class QuestionService {
         );
     }
 
-    const question = this.questionRepo.create(dto);
-    const saved = await this.questionRepo.save(question);
+    const saved = await this.questionRepo.createEntity(dto);
 
     return plainToInstance(QuestionResDto, saved, {
       excludeExtraneousValues: true,
@@ -125,7 +124,7 @@ export class QuestionService {
     if (dto.score) question.score = dto.score;
     if (dto.type) question.type = dto.type;
 
-    const updated = await this.questionRepo.save(question);
+    const updated = await this.questionRepo.updateEntity(question, {});
     return plainToInstance(QuestionResDto, updated, {
       excludeExtraneousValues: true,
     });
