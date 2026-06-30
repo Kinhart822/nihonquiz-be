@@ -2,18 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
 import { ClassStudentStatus } from '../../constants/class.constant';
+import {
+  NOTIFICATION_MESSAGES,
+  NotificationType,
+} from '../../constants/notification.constant';
 import { RoleUser } from '../../constants/user.constant';
 import { ClassAnnouncementRepository } from '../../database/repository/class-announcement.repository';
 import { ClassScheduleRepository } from '../../database/repository/class-schedule.repository';
 import { ClassStudentRepository } from '../../database/repository/class-student.repository';
 import { ClassRepository } from '../../database/repository/class.repository';
+import { JwtPayloadDto } from '../../shared/dtos/jwt-payload.dto';
 import { PageMetaDto } from '../../shared/dtos/page-meta.dto';
 import { PageDto } from '../../shared/dtos/page.dto';
-import { JwtPayloadDto } from '../../shared/dtos/jwt-payload.dto';
 import {
   httpBadRequest,
   httpErrors,
 } from '../../shared/exceptions/http-exception';
+import { NotificationService } from '../notification/notification.service';
 import { UserResDto } from '../user/dtos/user.res.dto';
 import {
   AssignTeacherDto,
@@ -41,6 +46,7 @@ export class ClassService {
     private readonly classStudentRepo: ClassStudentRepository,
     private readonly classAnnouncementRepo: ClassAnnouncementRepository,
     private readonly classScheduleRepo: ClassScheduleRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ==================== VALIDATION ====================
@@ -357,6 +363,7 @@ export class ClassService {
     classId: number,
     dto: CreateClassAnnouncementDto,
   ) {
+    // Check class access
     await this.checkClassAccess(user, classId);
     if (user.role === RoleUser.STUDENT) {
       throw new httpBadRequest(
@@ -365,12 +372,37 @@ export class ClassService {
       );
     }
 
+    // Create announcement
     const announcement = this.classAnnouncementRepo.create({
       ...dto,
       classId,
       authorId: user.id,
     });
     const saved = await this.classAnnouncementRepo.save(announcement);
+
+    // Notify all students in the class
+    const classStudents = await this.classStudentRepo.find({
+      where: { classId },
+    });
+    const classEntity = await this.classRepo.findOneBy({ id: classId });
+    const className = classEntity?.name || 'your class';
+
+    const notificationPromises = classStudents.map((cs) =>
+      this.notificationService.createNotification({
+        userId: cs.studentId,
+        type: NotificationType.CLASS_ANNOUNCEMENT,
+        title: NOTIFICATION_MESSAGES[NotificationType.CLASS_ANNOUNCEMENT].title,
+        message: NOTIFICATION_MESSAGES[
+          NotificationType.CLASS_ANNOUNCEMENT
+        ].message(className, dto.title),
+        metadata: { classId, announcementId: saved.id },
+      }),
+    );
+    await Promise.all(notificationPromises).catch((err) =>
+      console.error('Failed to send CLASS_ANNOUNCEMENT notifications', err),
+    );
+
+    // Return announcement
     return plainToInstance(ClassAnnouncementResDto, saved, {
       excludeExtraneousValues: true,
     });

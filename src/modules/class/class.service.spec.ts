@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClassService } from './class.service';
-import { ClassRepository } from '../../database/repository/class.repository';
-import { ClassStudentRepository } from '../../database/repository/class-student.repository';
+import { RoleUser } from '../../constants/user.constant';
 import { ClassAnnouncementRepository } from '../../database/repository/class-announcement.repository';
 import { ClassScheduleRepository } from '../../database/repository/class-schedule.repository';
-import { RoleUser } from '../../constants/user.constant';
+import { ClassStudentRepository } from '../../database/repository/class-student.repository';
+import { ClassRepository } from '../../database/repository/class.repository';
 import { httpBadRequest } from '../../shared/exceptions/http-exception';
+import { NotificationService } from '../notification/notification.service';
+import { ClassService } from './class.service';
 
 describe('ClassService', () => {
   let service: ClassService;
@@ -43,6 +44,12 @@ describe('ClassService', () => {
         {
           provide: ClassScheduleRepository,
           useValue: {},
+        },
+        {
+          provide: NotificationService,
+          useValue: {
+            createNotification: jest.fn(),
+          },
         },
       ],
     }).compile();

@@ -1,12 +1,8 @@
 import { FILE_UPLOAD_JOB, FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
 import {
   ConversationStatus,
-  MessageAttachmentStatus,
-  MessageAttachmentType,
-  MessageStatus,
   MessageType,
   ParticipantStatus,
-  RoleUser,
 } from '@constants/user.constant';
 import { SystemConfigService } from '@modules/system-config/system-config.service';
 import { getQueueToken } from '@nestjs/bullmq';
@@ -21,6 +17,7 @@ import {
   httpForbidden,
   httpNotFound,
 } from '@shared/exceptions/http-exception';
+import { NotificationService } from '../notification/notification.service';
 import { SocketEmitterService } from '../socket/socket-emitter.service';
 import { MessageService } from './message.service';
 
@@ -43,13 +40,16 @@ describe('MessageService', () => {
     const mockMessageRepo = {
       findOne: jest.fn(),
       getConversationMessagesWithFilters: jest.fn(),
-      create: jest.fn(),
+      createEntity: jest.fn(),
+      updateEntity: jest.fn(),
+      deleteEntityById: jest.fn(),
       save: jest.fn(),
     };
 
     const mockConversationRepo = {
       findOne: jest.fn(),
       update: jest.fn(),
+      updateEntityById: jest.fn(),
     };
 
     const mockParticipantRepo = {
@@ -69,7 +69,10 @@ describe('MessageService', () => {
 
     const mockMessageAttachmentRepo = {
       getConversationAttachmentsWithFilters: jest.fn(),
-      create: jest.fn(),
+      createEntity: jest.fn(),
+      createEntities: jest.fn(),
+      updateEntity: jest.fn(),
+      deleteEntityById: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
     };
@@ -77,7 +80,9 @@ describe('MessageService', () => {
     const mockMessagePinRepo = {
       findOne: jest.fn(),
       getPinnedMessagesWithFilters: jest.fn(),
-      create: jest.fn(),
+      createEntity: jest.fn(),
+      updateEntity: jest.fn(),
+      deleteEntityById: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
     };
@@ -106,6 +111,12 @@ describe('MessageService', () => {
         },
         { provide: MessagePinRepository, useValue: mockMessagePinRepo },
         { provide: SystemConfigService, useValue: mockSystemConfigService },
+        {
+          provide: NotificationService,
+          useValue: {
+            createNotification: jest.fn(),
+          },
+        },
         {
           provide: getQueueToken(FILE_UPLOAD_QUEUE),
           useValue: mockFileUploadQueue,
@@ -261,14 +272,13 @@ describe('MessageService', () => {
         content: 'Hello',
         conversationId: 1,
       };
-      messageRepo.create.mockReturnValue({ ...createdMessage } as any);
-      messageRepo.save.mockResolvedValue({ ...createdMessage } as any);
+      messageRepo.createEntity.mockResolvedValue({ ...createdMessage } as any);
 
       await service.sendMessage(1, dto);
 
-      expect(messageRepo.save).toHaveBeenCalled();
+      expect(messageRepo.createEntity).toHaveBeenCalled();
       expect(socketEmitterService.emitNewMessage).toHaveBeenCalled();
-      expect(conversationRepo.update).toHaveBeenCalled();
+      expect(conversationRepo.updateEntityById).toHaveBeenCalled();
       expect(participantRepo.incrementUnreadCount).toHaveBeenCalled();
     });
 
@@ -289,8 +299,7 @@ describe('MessageService', () => {
         content: 'Hello',
         conversationId: 1,
       };
-      messageRepo.create.mockReturnValue({ ...createdMessage } as any);
-      messageRepo.save.mockResolvedValue({ ...createdMessage } as any);
+      messageRepo.createEntity.mockResolvedValue({ ...createdMessage } as any);
 
       const files = [
         {
@@ -300,11 +309,13 @@ describe('MessageService', () => {
           mimetype: 'image/png',
         },
       ] as any;
-      messageAttachmentRepo.create.mockReturnValue({ id: 1 } as any);
+      messageAttachmentRepo.createEntities.mockResolvedValue([
+        { id: 1 },
+      ] as any);
 
       await service.sendMessage(1, dto, files);
 
-      expect(messageAttachmentRepo.save).toHaveBeenCalled();
+      expect(messageAttachmentRepo.createEntities).toHaveBeenCalled();
       expect(fileUploadQueue.add).toHaveBeenCalledWith(
         FILE_UPLOAD_JOB.UPLOAD_ATTACHMENT,
         expect.any(Object),
@@ -388,11 +399,11 @@ describe('MessageService', () => {
         ...mockParticipant,
       } as any);
       messagePinRepo.findOne.mockResolvedValue(null);
+      messagePinRepo.createEntity.mockResolvedValue({ id: 1 } as any);
 
       await service.pinMessage(1, { messageId: 1, conversationId: 1 });
 
-      expect(messagePinRepo.create).toHaveBeenCalled();
-      expect(messagePinRepo.save).toHaveBeenCalled();
+      expect(messagePinRepo.createEntity).toHaveBeenCalled();
       expect(socketEmitterService.emitPinMessage).toHaveBeenCalled();
     });
   });

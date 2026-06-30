@@ -3,10 +3,12 @@ import { AssignmentAttachmentRepository } from '@database/repository/assignment-
 import { AssignmentSubmissionAttachmentRepository } from '@database/repository/assignment-submission-attachment.repository';
 import { AssignmentSubmissionRepository } from '@database/repository/assignment-submission.repository';
 import { AssignmentRepository } from '@database/repository/assignment.repository';
+import { ClassStudentRepository } from '@database/repository/class-student.repository';
 import { ClassRepository } from '@database/repository/class.repository';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmExModule } from '@shared/decorators/typeorm.module';
+import { NotificationModule } from '../notification/notification.module';
 import { AssignmentController } from './assignment.controller';
 import { AssignmentService } from './assignment.service';
 
@@ -16,12 +18,14 @@ import { AssignmentService } from './assignment.service';
       AssignmentRepository,
       AssignmentSubmissionRepository,
       ClassRepository,
+      ClassStudentRepository,
       AssignmentAttachmentRepository,
       AssignmentSubmissionAttachmentRepository,
     ]),
     BullModule.registerQueue({
       name: FILE_UPLOAD_QUEUE,
     }),
+    NotificationModule,
   ],
   controllers: [AssignmentController],
   providers: [AssignmentService],

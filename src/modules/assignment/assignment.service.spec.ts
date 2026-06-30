@@ -1,15 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AssignmentService } from './assignment.service';
-import { AssignmentRepository } from '@database/repository/assignment.repository';
-import { AssignmentSubmissionRepository } from '@database/repository/assignment-submission.repository';
-import { ClassRepository } from '@database/repository/class.repository';
+import { FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
+import { AssignmentSubmissionEntity } from '@database/entities/assignment-submission.entity';
 import { AssignmentEntity } from '@database/entities/assignment.entity';
 import { ClassEntity } from '@database/entities/class.entity';
-import { AssignmentSubmissionEntity } from '@database/entities/assignment-submission.entity';
+import { AssignmentAttachmentRepository } from '@database/repository/assignment-attachment.repository';
+import { AssignmentSubmissionAttachmentRepository } from '@database/repository/assignment-submission-attachment.repository';
+import { AssignmentSubmissionRepository } from '@database/repository/assignment-submission.repository';
+import { AssignmentRepository } from '@database/repository/assignment.repository';
+import { ClassStudentRepository } from '@database/repository/class-student.repository';
+import { ClassRepository } from '@database/repository/class.repository';
+import { getQueueToken } from '@nestjs/bullmq';
+import { Test, TestingModule } from '@nestjs/testing';
 import {
-  httpNotFound,
   httpBadRequest,
+  httpNotFound,
 } from '@shared/exceptions/http-exception';
+import { NotificationService } from '../notification/notification.service';
+import { AssignmentService } from './assignment.service';
+
+jest.mock('typeorm-transactional', () => ({
+  Transactional: () => () => ({}),
+}));
 
 describe('AssignmentService', () => {
   let service: AssignmentService;
@@ -45,6 +55,32 @@ describe('AssignmentService', () => {
           provide: ClassRepository,
           useValue: {
             getEntityById: jest.fn(),
+          },
+        },
+        {
+          provide: AssignmentAttachmentRepository,
+          useValue: {},
+        },
+        {
+          provide: AssignmentSubmissionAttachmentRepository,
+          useValue: {},
+        },
+        {
+          provide: ClassStudentRepository,
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: NotificationService,
+          useValue: {
+            createNotification: jest.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: getQueueToken(FILE_UPLOAD_QUEUE),
+          useValue: {
+            add: jest.fn(),
           },
         },
       ],

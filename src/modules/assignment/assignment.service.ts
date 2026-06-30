@@ -1,36 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { AssignmentRepository } from '@database/repository/assignment.repository';
-import { AssignmentSubmissionRepository } from '@database/repository/assignment-submission.repository';
-import { AssignmentAttachmentRepository } from '@database/repository/assignment-attachment.repository';
-import { AssignmentSubmissionAttachmentRepository } from '@database/repository/assignment-submission-attachment.repository';
-import { ClassRepository } from '@database/repository/class.repository';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
-import { FILE_UPLOAD_QUEUE, FILE_UPLOAD_JOB } from '@constants/queue.constant';
+import {
+  NOTIFICATION_MESSAGES,
+  NotificationType,
+} from '@constants/notification.constant';
+import { FILE_UPLOAD_JOB, FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
 import {
   AssignmentAttachmentStatus,
   AssignmentAttachmentType,
 } from '@constants/user.constant';
-import { Transactional } from 'typeorm-transactional';
+import { AssignmentAttachmentRepository } from '@database/repository/assignment-attachment.repository';
+import { AssignmentSubmissionAttachmentRepository } from '@database/repository/assignment-submission-attachment.repository';
+import { AssignmentSubmissionRepository } from '@database/repository/assignment-submission.repository';
+import { AssignmentRepository } from '@database/repository/assignment.repository';
+import { ClassStudentRepository } from '@database/repository/class-student.repository';
+import { ClassRepository } from '@database/repository/class.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable } from '@nestjs/common';
+import { PageMetaDto } from '@shared/dtos/page-meta.dto';
+import { PageDto } from '@shared/dtos/page.dto';
 import {
-  CreateAssignmentDto,
-  UpdateAssignmentDto,
-  SubmitAssignmentDto,
-  GradeAssignmentDto,
+  httpBadRequest,
+  httpErrors,
+  httpNotFound,
+} from '@shared/exceptions/http-exception';
+import { Queue } from 'bullmq';
+import { plainToInstance } from 'class-transformer';
+import { Transactional } from 'typeorm-transactional';
+import { NotificationService } from '../notification/notification.service';
+import {
   AssignmentFilterDto,
+  CreateAssignmentDto,
+  GradeAssignmentDto,
+  SubmitAssignmentDto,
+  UpdateAssignmentDto,
 } from './dtos/assignment.req.dto';
 import {
   AssignmentResDto,
   AssignmentSubmissionResDto,
 } from './dtos/assignment.res.dto';
-import { plainToInstance } from 'class-transformer';
-import {
-  httpNotFound,
-  httpBadRequest,
-  httpErrors,
-} from '@shared/exceptions/http-exception';
-import { PageMetaDto } from '@shared/dtos/page-meta.dto';
-import { PageDto } from '@shared/dtos/page.dto';
 
 @Injectable()
 export class AssignmentService {
@@ -41,6 +47,8 @@ export class AssignmentService {
     private readonly assignmentAttachmentRepo: AssignmentAttachmentRepository,
     private readonly submissionAttachmentRepo: AssignmentSubmissionAttachmentRepository,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
+    private readonly classStudentRepo: ClassStudentRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ==================== VALIDATION ====================
@@ -127,6 +135,26 @@ export class AssignmentService {
       }
     }
 
+    // Notify all students in the class
+    const classStudents = await this.classStudentRepo.find({
+      where: { classId: dto.classId },
+    });
+    const notificationPromises = classStudents.map((cs) =>
+      this.notificationService.createNotification({
+        userId: cs.studentId,
+        type: NotificationType.ASSIGNMENT_CREATED,
+        title: NOTIFICATION_MESSAGES[NotificationType.ASSIGNMENT_CREATED].title,
+        message: NOTIFICATION_MESSAGES[
+          NotificationType.ASSIGNMENT_CREATED
+        ].message(entity.title),
+        metadata: { assignmentId: entity.id, classId: dto.classId },
+      }),
+    );
+    await Promise.all(notificationPromises).catch((err) =>
+      console.error('Failed to send ASSIGNMENT_CREATED notifications', err),
+    );
+
+    // Return created assignment
     return plainToInstance(AssignmentResDto, entity, {
       excludeExtraneousValues: true,
     });
@@ -268,6 +296,7 @@ export class AssignmentService {
     submissionId: number,
     dto: GradeAssignmentDto,
   ): Promise<AssignmentSubmissionResDto> {
+    // Get submission and validate
     const submission = await this.submissionRepo.getEntityById(submissionId);
     if (!submission) {
       throw new httpNotFound(
@@ -276,11 +305,30 @@ export class AssignmentService {
       );
     }
 
+    // Grade the submission
     const updated = await this.submissionRepo.updateEntity(submission, {
       score: dto.score,
       feedback: dto.feedback,
       gradedAt: new Date(),
     });
+
+    // Notify the student
+    await this.notificationService
+      .createNotification({
+        userId: submission.studentId,
+        type: NotificationType.ASSIGNMENT_GRADED,
+        title: NOTIFICATION_MESSAGES[NotificationType.ASSIGNMENT_GRADED].title,
+        message: NOTIFICATION_MESSAGES[
+          NotificationType.ASSIGNMENT_GRADED
+        ].message(dto.score),
+        metadata: {
+          assignmentId: submission.assignmentId,
+          submissionId: submission.id,
+        },
+      })
+      .catch((err) =>
+        console.error('Failed to send ASSIGNMENT_GRADED notification', err),
+      );
 
     return plainToInstance(AssignmentSubmissionResDto, updated, {
       excludeExtraneousValues: true,

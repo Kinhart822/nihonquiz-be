@@ -8,6 +8,7 @@ import { DatabaseModule } from './configs/database.module';
 import { validate } from './configs/env.validation';
 import { InterceptorsModule } from './interceptors/interceptor.module';
 import { LoggerHttpRequestMiddleware } from './middleware/logger.middleware';
+import { AssignmentModule } from './modules/assignment/assignment.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GuardModule } from './modules/auth/guards/guard.module';
 import { ClassModule } from './modules/class/class.module';
@@ -17,10 +18,10 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { GrammarModule } from './modules/grammar/grammar.module';
 import { KanjiModule } from './modules/kanji/kanji.module';
 import { LessonModule } from './modules/lesson/lesson.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { PipeModule } from './pipes/pipe.module';
-import { AssignmentModule } from './modules/assignment/assignment.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AssignmentModule } from './modules/assignment/assignment.module';
     LessonModule,
     VocabularyModule,
     AssignmentModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -10,6 +10,7 @@ import {
 import { BaseEntity } from '../../shared/base-entity';
 import { TestAttemptEntity } from './test-attempt.entity';
 import { AssignmentSubmissionEntity } from './assignment-submission.entity';
+import { NotificationEntity } from './notification.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
@@ -73,4 +74,7 @@ export class UserEntity extends BaseEntity {
     (classStudent: ClassStudentEntity) => classStudent.student,
   )
   classesEnrolled!: ClassStudentEntity[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.user)
+  notifications!: NotificationEntity[];
 }

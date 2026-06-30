@@ -1,3 +1,7 @@
+import {
+  NOTIFICATION_MESSAGES,
+  NotificationType,
+} from '@constants/notification.constant';
 import { FILE_UPLOAD_JOB, FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
 import {
   ConversationStatus,
@@ -32,6 +36,7 @@ import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 import { Transactional } from 'typeorm-transactional';
 import { ConversationResDto } from '../conversation/dto/conversation.res.dto';
+import { NotificationService } from '../notification/notification.service';
 import { SocketEmitterService } from '../socket/socket-emitter.service';
 import {
   EditMessageDto,
@@ -58,6 +63,7 @@ export class MessageService {
     private readonly messageAttachmentRepo: MessageAttachmentRepository,
     private readonly messagePinRepo: MessagePinRepository,
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ==================== VALIDATION ====================
@@ -518,6 +524,45 @@ export class MessageService {
 
     // Emit global conversation update to all participants
     void this.emitGlobalUpdate(dto.conversationId, message);
+
+    // Create notifications for other participants
+    try {
+      const participants = await this.participantRepo.find({
+        where: { conversationId: dto.conversationId },
+        relations: { user: true },
+      });
+
+      // Fetch sender user info since validateParticipant didn't load it
+      const senderInfo = await this.participantRepo.findOne({
+        where: { id: senderParticipant.id },
+        relations: { user: true },
+      });
+
+      const senderName = senderInfo?.user?.username || 'Someone';
+
+      for (const participant of participants) {
+        if (
+          participant.userId !== senderParticipant.userId &&
+          participant.user
+        ) {
+          await this.notificationService.createNotification({
+            userId: participant.userId,
+            title: NOTIFICATION_MESSAGES[NotificationType.NEW_MESSAGE].title,
+            message:
+              NOTIFICATION_MESSAGES[NotificationType.NEW_MESSAGE].message(
+                senderName,
+              ),
+            type: NotificationType.NEW_MESSAGE,
+            metadata: {
+              conversationId: dto.conversationId,
+              messageId: message.id,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create notifications for new message:', error);
+    }
 
     return message;
   }

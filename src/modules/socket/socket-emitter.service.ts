@@ -57,6 +57,11 @@ export class SocketEmitterService implements OnModuleInit {
     this.emitEvent(email, SocketEvent.QUESTION_BANK_EXPORT_COMPLETED, data);
   }
 
+  // ==================== NOTIFICATIONS ====================
+  emitNewNotification(email: string, data: any): void {
+    this.emitEvent(email, SocketEvent.NEW_NOTIFICATION, data);
+  }
+
   emitUserBlocked(email: string, data: any): void {
     this.emitEvent(email, SocketEvent.USER_BLOCKED, data);
   }

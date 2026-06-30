@@ -16,6 +16,8 @@ import { FileUploadProcessor } from '../../shared/queues/file-upload.processor';
 import { MessageController } from './message.controller';
 import { MessageService } from './message.service';
 
+import { NotificationModule } from '../notification/notification.module';
+
 @Module({
   imports: [
     TypeOrmExModule.forCustomRepository([
@@ -32,6 +34,7 @@ import { MessageService } from './message.service';
     BullModule.registerQueue({
       name: FILE_UPLOAD_QUEUE,
     }),
+    NotificationModule,
   ],
   controllers: [MessageController],
   providers: [MessageService, FileUploadProcessor],

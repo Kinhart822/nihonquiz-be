@@ -21,6 +21,11 @@ import { UserRepository } from '@repositories/user.repository';
 import { Job } from 'bullmq';
 import { SocketEmitterService } from '../../modules/socket/socket-emitter.service';
 import { In } from 'typeorm';
+import { NotificationService } from '../../modules/notification/notification.service';
+import {
+  NotificationType,
+  NOTIFICATION_MESSAGES,
+} from '@constants/notification.constant';
 
 @Processor(SYSTEM_MESSAGE_QUEUE)
 export class SystemMessageProcessor extends WorkerHost {
@@ -32,6 +37,7 @@ export class SystemMessageProcessor extends WorkerHost {
     private readonly participantRepo: ParticipantRepository,
     private readonly messageRepo: MessageRepository,
     private readonly socketEmitterService: SocketEmitterService,
+    private readonly notificationService: NotificationService,
   ) {
     super();
   }
@@ -175,10 +181,27 @@ export class SystemMessageProcessor extends WorkerHost {
           .andWhere('userId != :adminId', { adminId })
           .execute();
 
-        // 8. Emit sockets
+        // 8. Emit sockets and Create Notifications
         savedMessages.forEach((msg) => {
           this.socketEmitterService.emitNewMessage(msg.conversationId, msg);
         });
+
+        // Create SYSTEM_ALERT notifications
+        const notificationPromises = chunk.map((user) =>
+          this.notificationService.createNotification({
+            userId: user.id,
+            type: NotificationType.SYSTEM_ALERT,
+            title: NOTIFICATION_MESSAGES[NotificationType.SYSTEM_ALERT].title,
+            message:
+              NOTIFICATION_MESSAGES[NotificationType.SYSTEM_ALERT].message(
+                content,
+              ),
+            metadata: { adminId },
+          }),
+        );
+        await Promise.all(notificationPromises).catch((err) =>
+          this.logger.error('Failed to create SYSTEM_ALERT notifications', err),
+        );
       } catch (err: any) {
         this.logger.error(
           `Failed to process chunk for broadcast from admin ${adminId}`,
