@@ -11,12 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser, RoleGuard } from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { PageDto } from '@shared/dtos/page.dto';
@@ -35,7 +30,6 @@ import {
 import { AccountHistoryResDto } from './dtos/admin.res.dto';
 
 @ApiTags('Admin')
-@ApiBearerAuth()
 @Controller('admin')
 @RoleGuard(RoleUser.ADMIN)
 export class AdminController {

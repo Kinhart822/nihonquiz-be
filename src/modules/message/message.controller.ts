@@ -12,14 +12,13 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from '@shared/decorators/guard.decorator';
+import { AuthUser, RoleGuard } from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { PageDto } from '@shared/dtos/page.dto';
 import {
@@ -40,7 +39,7 @@ import {
 import { MessageService } from './message.service';
 
 @ApiTags('Message')
-@ApiBearerAuth()
+@RoleGuard()
 @Controller('message')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}

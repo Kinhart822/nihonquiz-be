@@ -10,9 +10,6 @@ export class DashboardService {
   constructor() {}
 
   // ==================== ADMIN ====================
-  /**
-   * Get admin dashboard statistics (Mock)
-   */
   async getAdminDashboardStats(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     adminId: number,
@@ -29,9 +26,6 @@ export class DashboardService {
   }
 
   // ==================== STUDENT ====================
-  /**
-   * Get student dashboard statistics (Mock)
-   */
   async getStudentDashboardStats(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     studentId: number,
@@ -48,9 +42,6 @@ export class DashboardService {
   }
 
   // ==================== TEACHER ====================
-  /**
-   * Get teacher dashboard statistics (Mock)
-   */
   async getTeacherDashboardStats(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     teacherId: number,

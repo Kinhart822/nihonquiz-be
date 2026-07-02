@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -9,25 +10,18 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
 import { PageDto } from '@shared/dtos/page.dto';
-import { KanjiService } from './kanji.service';
 import {
   CreateKanjiDto,
-  UpdateKanjiDto,
   KanjiFilterDto,
+  UpdateKanjiDto,
 } from './dtos/kanji.req.dto';
 import { KanjiResDto } from './dtos/kanji.res.dto';
+import { KanjiService } from './kanji.service';
 
 @ApiTags('Kanji')
-@ApiBearerAuth()
 @Controller('kanji')
 export class KanjiController {
   constructor(private readonly kanjiService: KanjiService) {}

@@ -41,11 +41,12 @@ export class CourseController {
 
   // ==================== GET LIST ====================
   @Get()
-  @ApiOperation({ summary: 'Get list of courses with pagination' })
+  @ApiOperation({ summary: 'Get list of courses' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: PageDto<CourseResDto>,
   })
+  @RoleGuard()
   async getCourses(
     @Query() filterDto: CourseFilterDto,
   ): Promise<PageDto<CourseResDto>> {
@@ -59,6 +60,7 @@ export class CourseController {
     status: HttpStatus.OK,
     type: CourseResDto,
   })
+  @RoleGuard()
   async getCourseById(@Param('id') id: string): Promise<CourseResDto> {
     return this.courseService.getCourseById(+id);
   }

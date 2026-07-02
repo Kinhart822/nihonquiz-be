@@ -196,11 +196,6 @@ export class AuthService {
       );
     }
 
-    return this.login(user!);
-  }
-
-  // Core login logic for all methods
-  async login(user: UserEntity): Promise<LoginResDto> {
     const payload: JwtPayloadDto = {
       email: user!.email,
       id: user!.id,
@@ -217,7 +212,6 @@ export class AuthService {
   }
 
   // ==================== LOGOUT ====================
-  // Logout
   async logout(userId: number): Promise<any> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) {
@@ -239,9 +233,7 @@ export class AuthService {
   }
 
   // ==================== OTP & PASSWORD ====================
-  /**
-   * Verify OTP and execute pre-defined action
-   */
+  // Verify OTP and Execute action
   @Transactional()
   async verifyOtpAndExecuteAction(
     email: string,
@@ -417,7 +409,6 @@ export class AuthService {
   }
 
   // ==================== REFRESH TOKEN ====================
-  // Refresh token
   async refreshToken(data: RefreshTokenReqDto): Promise<RefreshTokenResDto> {
     const { refreshToken } = data;
     const decodedData: JwtPayloadDto = await this.jwtService.verifyAsync(
@@ -447,7 +438,6 @@ export class AuthService {
   }
 
   // ==================== GOOGLE AUTH ====================
-  // Login/Register with Google
   @Transactional()
   async googleLogin(req: any): Promise<LoginResDto | null> {
     if (!req.user) return null;
@@ -483,6 +473,18 @@ export class AuthService {
       }
     }
 
-    return this.login(user!);
+    const payload: JwtPayloadDto = {
+      email: user!.email,
+      id: user!.id,
+      status: UserStatus.ACTIVE,
+      role: user!.role,
+    };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
+
+    return plainToInstance(LoginResDto, {
+      accessToken,
+      refreshToken,
+      userId: user!.id,
+    });
   }
 }

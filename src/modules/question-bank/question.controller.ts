@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
@@ -33,7 +32,6 @@ import { QuestionResDto } from './dtos/question.res.dto';
 import { QuestionService } from './question.service';
 
 @ApiTags('Question Bank')
-@ApiBearerAuth()
 @Controller('question')
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}

@@ -1,6 +1,4 @@
 import { ConversationType, RoleUser } from '@constants/user.constant';
-import { ParticipantFilterDto } from './dto/participant.req.dto';
-import { ParticipantResDto } from './dto/participant.res.dto';
 import {
   Body,
   Controller,
@@ -16,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
@@ -39,9 +36,10 @@ import {
   UpdateConversationDto,
 } from './dto/conversation.req.dto';
 import { ConversationResDto } from './dto/conversation.res.dto';
+import { ParticipantFilterDto } from './dto/participant.req.dto';
+import { ParticipantResDto } from './dto/participant.res.dto';
 
 @ApiTags('Conversation')
-@ApiBearerAuth()
 @Controller('conversation')
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
@@ -54,6 +52,7 @@ export class ConversationController {
     type: ConversationResDto,
     description: 'List of conversations returned successfully',
   })
+  @RoleGuard()
   async getList(
     @Query() filterDto: ConversationFilterDto,
   ): Promise<PageDto<ConversationResDto>> {
@@ -66,6 +65,7 @@ export class ConversationController {
     status: HttpStatus.OK,
     description: 'User conversations returned successfully',
   })
+  @RoleGuard()
   async getListByUserId(
     @AuthUser() user: JwtPayloadDto,
     @Query() filterDto: ConversationFilterDto,
@@ -84,6 +84,7 @@ export class ConversationController {
     status: HttpStatus.OK,
     description: 'List of participants returned successfully',
   })
+  @RoleGuard()
   async getParticipants(
     @Param('id') id: string,
     @Query() filterDto: ParticipantFilterDto,
@@ -99,6 +100,7 @@ export class ConversationController {
     type: ConversationResDto,
     description: 'Conversation information returned successfully',
   })
+  @RoleGuard()
   async getInfo(@Param('id') id: string): Promise<ConversationResDto> {
     return this.conversationService.getInfoConversation(+id);
   }

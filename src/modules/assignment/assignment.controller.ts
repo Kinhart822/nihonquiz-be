@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -11,38 +12,46 @@ import {
   Query,
   Req,
   UploadedFiles,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { AssignmentService } from './assignment.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
-  CreateAssignmentDto,
-  UpdateAssignmentDto,
-  SubmitAssignmentDto,
-  GradeAssignmentDto,
-  AssignmentFilterDto,
-} from './dtos/assignment.req.dto';
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { RoleGuard } from '@shared/decorators/guard.decorator';
 import { PageDto } from '@shared/dtos/page.dto';
+import { AssignmentService } from './assignment.service';
+import {
+  AssignmentFilterDto,
+  CreateAssignmentDto,
+  ExtendDeadlineDto,
+  GradeAssignmentDto,
+  SubmitAssignmentDto,
+  UpdateAssignmentDto,
+} from './dtos/assignment.req.dto';
 import {
   AssignmentResDto,
+  AssignmentStatsResDto,
   AssignmentSubmissionResDto,
 } from './dtos/assignment.res.dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
 
 @ApiTags('Assignments')
 @Controller('assignments')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 export class AssignmentController {
   constructor(private readonly assignmentService: AssignmentService) {}
 
   // ==================== CREATE ====================
   @Post()
   @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
+  @ApiOperation({ summary: 'Create assignment' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    type: AssignmentResDto,
+    description: 'Assignment created successfully',
+  })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('files'))
   async createAssignment(
@@ -54,6 +63,13 @@ export class AssignmentController {
 
   // ==================== GET LIST ====================
   @Get('class/:classId')
+  @RoleGuard()
+  @ApiOperation({ summary: 'Get assignments by class' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: PageDto,
+    description: 'List of assignments returned successfully',
+  })
   async getAssignmentsByClass(
     @Param('classId') classId: number,
     @Query() filterDto: AssignmentFilterDto,
@@ -64,6 +80,12 @@ export class AssignmentController {
   // ==================== UPDATE ====================
   @Put(':id')
   @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
+  @ApiOperation({ summary: 'Update assignment' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: AssignmentResDto,
+    description: 'Assignment updated successfully',
+  })
   async updateAssignment(
     @Param('id') id: number,
     @Body() dto: UpdateAssignmentDto,
@@ -75,8 +97,39 @@ export class AssignmentController {
   @Delete(':id')
   @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete assignment' })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Assignment deleted successfully',
+  })
   async deleteAssignment(@Param('id') id: number): Promise<void> {
     return this.assignmentService.deleteAssignment(id);
+  }
+
+  // ==================== CLOSE ASSIGNMENT ====================
+  @Put(':id/close')
+  @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
+  async closeAssignment(@Param('id') id: number): Promise<AssignmentResDto> {
+    return this.assignmentService.closeAssignment(id);
+  }
+
+  // ==================== EXTEND DEADLINE ====================
+  @Put(':id/extend-deadline')
+  @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
+  async extendDeadline(
+    @Param('id') id: number,
+    @Body() dto: ExtendDeadlineDto,
+  ): Promise<AssignmentResDto> {
+    return this.assignmentService.extendDeadline(id, dto);
+  }
+
+  // ==================== GET STATISTICS ====================
+  @Get(':id/statistics')
+  @RoleGuard(RoleUser.TEACHER, RoleUser.ADMIN)
+  async getAssignmentStatistics(
+    @Param('id') id: number,
+  ): Promise<AssignmentStatsResDto> {
+    return this.assignmentService.getAssignmentStatistics(id);
   }
 
   // ==================== SUBMIT ====================
@@ -92,6 +145,23 @@ export class AssignmentController {
   ): Promise<AssignmentSubmissionResDto> {
     const studentId = req.user.id;
     return this.assignmentService.submitAssignment(id, studentId, dto, files);
+  }
+
+  // ==================== DELETE SUBMISSION ATTACHMENT ====================
+  @Delete(':id/submissions/attachments/:attachmentId')
+  @RoleGuard(RoleUser.STUDENT)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteSubmissionAttachment(
+    @Param('id') id: number,
+    @Param('attachmentId') attachmentId: number,
+    @Req() req: any,
+  ): Promise<void> {
+    const studentId = req.user.id;
+    return this.assignmentService.deleteSubmissionAttachment(
+      id,
+      attachmentId,
+      studentId,
+    );
   }
 
   // ==================== GRADE ====================

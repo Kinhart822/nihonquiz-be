@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -9,25 +10,18 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
 import { PageDto } from '@shared/dtos/page.dto';
-import { GrammarService } from './grammar.service';
 import {
   CreateGrammarDto,
-  UpdateGrammarDto,
   GrammarFilterDto,
+  UpdateGrammarDto,
 } from './dtos/grammar.req.dto';
 import { GrammarResDto } from './dtos/grammar.res.dto';
+import { GrammarService } from './grammar.service';
 
 @ApiTags('Grammar')
-@ApiBearerAuth()
 @Controller('grammar')
 export class GrammarController {
   constructor(private readonly grammarService: GrammarService) {}

@@ -24,6 +24,14 @@ export class AssignmentResDto {
 
   @ApiProperty()
   @Expose()
+  allowResubmit!: boolean;
+
+  @ApiProperty()
+  @Expose()
+  isClosed!: boolean;
+
+  @ApiProperty()
+  @Expose()
   createdAt!: Date;
 
   @ApiProperty()
@@ -71,4 +79,22 @@ export class AssignmentSubmissionResDto {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+}
+
+export class AssignmentStatsResDto {
+  @ApiProperty()
+  @Expose()
+  totalStudents!: number;
+
+  @ApiProperty()
+  @Expose()
+  onTimeCount!: number;
+
+  @ApiProperty()
+  @Expose()
+  lateCount!: number;
+
+  @ApiProperty()
+  @Expose()
+  missingCount!: number;
 }

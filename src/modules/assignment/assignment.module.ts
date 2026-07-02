@@ -9,6 +9,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmExModule } from '@shared/decorators/typeorm.module';
 import { NotificationModule } from '../notification/notification.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { AssignmentController } from './assignment.controller';
 import { AssignmentService } from './assignment.service';
 
@@ -26,6 +27,7 @@ import { AssignmentService } from './assignment.service';
       name: FILE_UPLOAD_QUEUE,
     }),
     NotificationModule,
+    CloudinaryModule,
   ],
   controllers: [AssignmentController],
   providers: [AssignmentService],

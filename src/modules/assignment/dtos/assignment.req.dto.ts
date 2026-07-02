@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsNumber,
@@ -30,6 +31,11 @@ export class CreateAssignmentDto {
   @IsNumber()
   @Type(() => Number)
   classId!: number;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  allowResubmit?: boolean;
 }
 
 export class UpdateAssignmentDto extends PartialType(CreateAssignmentDto) {}
@@ -56,3 +62,9 @@ export class GradeAssignmentDto {
 }
 
 export class AssignmentFilterDto extends PageOptionsDto {}
+
+export class ExtendDeadlineDto {
+  @ApiProperty()
+  @IsDateString()
+  newDueDate!: string;
+}

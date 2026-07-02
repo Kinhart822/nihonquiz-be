@@ -18,6 +18,12 @@ export class AssignmentEntity extends BaseEntity {
   @Column({ name: 'class_id', type: 'int' })
   classId!: number;
 
+  @Column({ name: 'allow_resubmit', type: 'boolean', default: true })
+  allowResubmit!: boolean;
+
+  @Column({ name: 'is_closed', type: 'boolean', default: false })
+  isClosed!: boolean;
+
   @ManyToOne(() => ClassEntity, (cls) => cls.assignments)
   @JoinColumn({ name: 'class_id' })
   class!: ClassEntity;

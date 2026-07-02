@@ -7,13 +7,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { AuthUser, PublicRoute } from '@shared/decorators/guard.decorator';
+  AuthUser,
+  PublicRoute,
+  RoleGuard,
+} from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { AuthService } from './auth.service';
 import {
@@ -64,7 +63,7 @@ export class AuthController {
 
   // ==================== LOGOUT ====================
   @Post('logout')
-  @ApiBearerAuth()
+  @RoleGuard()
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({
     status: HttpStatus.OK,

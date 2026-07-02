@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -9,33 +10,25 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthUser, RoleGuard } from '@shared/decorators/guard.decorator';
+import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { PageDto } from '@shared/dtos/page.dto';
-import { PracticeTestService } from './practice-test.service';
 import {
   CreatePracticeTestDto,
-  UpdatePracticeTestDto,
   PracticeTestFilterDto,
   SubmitPracticeTestDto,
+  UpdatePracticeTestDto,
 } from './dtos/practice-test.req.dto';
 import {
-  PracticeTestResDto,
-  TestAttemptResDto,
-  StudentResultResDto,
   PracticeTestAnalyticsResDto,
+  PracticeTestResDto,
+  StudentResultResDto,
+  TestAttemptResDto,
 } from './dtos/practice-test.res.dto';
-import { AuthUser } from '@shared/decorators/guard.decorator';
-import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
+import { PracticeTestService } from './practice-test.service';
 
 @ApiTags('Practice Test')
-@ApiBearerAuth()
 @Controller('practice-test')
 export class PracticeTestController {
   constructor(private readonly practiceTestService: PracticeTestService) {}

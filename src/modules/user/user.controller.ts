@@ -9,21 +9,20 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from '@shared/decorators/guard.decorator';
+import { AuthUser, RoleGuard } from '@shared/decorators/guard.decorator';
 import { JwtPayloadDto } from '@shared/dtos/jwt-payload.dto';
 import { ChangePasswordDto, UpdateProfileDto } from './dtos/user.req.dto';
 import { UserResDto } from './dtos/user.res.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User')
-@ApiBearerAuth()
+@RoleGuard()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

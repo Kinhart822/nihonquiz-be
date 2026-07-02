@@ -50,11 +50,34 @@ export class AdminService {
     private readonly systemMessageQueue: Queue,
   ) {}
 
-  // ==================== USER MANAGEMENT ====================
+  // ==================== VALIDATION ====================
+  private async validateAdmin(adminId: number) {
+    const admin = await this.userRepo.findOne({
+      where: { id: adminId, role: RoleUser.ADMIN },
+    });
+    if (!admin) {
+      throw new httpNotFound(
+        httpErrors.ACCOUNT_NOT_FOUND.message,
+        httpErrors.ACCOUNT_NOT_FOUND.code,
+      );
+    }
+    return admin;
+  }
 
-  /**
-   * Block a user
-   */
+  private async validateUserExists(userId: number) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId, role: In([RoleUser.STUDENT, RoleUser.TEACHER]) },
+    });
+    if (!user) {
+      throw new httpNotFound(
+        httpErrors.ACCOUNT_NOT_FOUND.message,
+        httpErrors.ACCOUNT_NOT_FOUND.code,
+      );
+    }
+    return user;
+  }
+
+  // ==================== USER MANAGEMENT ====================
   @Transactional()
   async blockUser(adminId: number, userId: number, dto: ActionDto) {
     await this.validateAdmin(adminId);
@@ -96,9 +119,6 @@ export class AdminService {
     return true;
   }
 
-  /**
-   * Unblock a user
-   */
   @Transactional()
   async unblockUser(adminId: number, userId: number, dto: ActionDto) {
     await this.validateAdmin(adminId);
@@ -140,9 +160,6 @@ export class AdminService {
     return true;
   }
 
-  /**
-   * Delete a user
-   */
   @Transactional()
   async deleteUser(adminId: number, userId: number, dto: ActionDto) {
     await this.validateAdmin(adminId);
@@ -185,10 +202,6 @@ export class AdminService {
   }
 
   // ==================== ADMIN MANAGEMENT ====================
-
-  /**
-   * Get list of admin accounts
-   */
   async getAdminList(filterDto: AdminFilterDto): Promise<PageDto<UserResDto>> {
     const { entities, total } = await this.userRepo.getUserListByFilter(
       filterDto,
@@ -205,9 +218,6 @@ export class AdminService {
     return new PageDto(mappedItems, meta);
   }
 
-  /**
-   * Get info admin account
-   */
   async getAdminInfo(id: number): Promise<UserResDto> {
     const user = await this.userRepo.findOne({
       where: { id, role: RoleUser.ADMIN },
@@ -223,9 +233,6 @@ export class AdminService {
     });
   }
 
-  /**
-   * Create new admin account
-   */
   @Transactional()
   async createAdmin(dto: CreateAdminDto) {
     const { email, username, password, description } = dto;
@@ -260,9 +267,6 @@ export class AdminService {
     });
   }
 
-  /**
-   * Update admin account
-   */
   @Transactional()
   async updateAdmin(id: number, dto: EditAdminDto) {
     const { email, username, password, description } = dto;
@@ -318,9 +322,6 @@ export class AdminService {
     });
   }
 
-  /**
-   * Delete admin account
-   */
   @Transactional()
   async deleteAdmin(adminId: number) {
     const admin = await this.userRepo.findOne({
@@ -338,10 +339,6 @@ export class AdminService {
   }
 
   // ==================== ACCOUNT HISTORY ====================
-
-  /**
-   * Record a new account history event
-   */
   @Transactional()
   async createAccountHistory(data: {
     userId: number;
@@ -354,9 +351,6 @@ export class AdminService {
     return await this.accountHistoryRepo.save(history);
   }
 
-  /**
-   * Get list of account history
-   */
   async getAccountHistoryList(
     filterDto: AccountHistoryFilterDto,
   ): Promise<PageDto<AccountHistoryResDto>> {
@@ -373,9 +367,6 @@ export class AdminService {
     return new PageDto(mappedItems, pageMetaDto);
   }
 
-  /**
-   * Get info account history
-   */
   async getAccountHistoryInfo(id: number) {
     const history = await this.accountHistoryRepo.findOne({
       where: { id },
@@ -392,10 +383,6 @@ export class AdminService {
   }
 
   // ==================== NOTIFICATIONS ====================
-
-  /**
-   * Send system notification (message) to all users (Background Job)
-   */
   async sendSystemNotification(adminId: number, dto: SystemNotificationDto) {
     await this.validateAdmin(adminId);
 
@@ -406,39 +393,5 @@ export class AdminService {
     });
 
     return true;
-  }
-
-  // ==================== VALIDATION ====================
-
-  /**
-   * Validate that an admin exists
-   */
-  private async validateAdmin(adminId: number) {
-    const admin = await this.userRepo.findOne({
-      where: { id: adminId, role: RoleUser.ADMIN },
-    });
-    if (!admin) {
-      throw new httpNotFound(
-        httpErrors.ACCOUNT_NOT_FOUND.message,
-        httpErrors.ACCOUNT_NOT_FOUND.code,
-      );
-    }
-    return admin;
-  }
-
-  /**
-   * Validate that a user exists
-   */
-  private async validateUserExists(userId: number) {
-    const user = await this.userRepo.findOne({
-      where: { id: userId, role: In([RoleUser.STUDENT, RoleUser.TEACHER]) },
-    });
-    if (!user) {
-      throw new httpNotFound(
-        httpErrors.ACCOUNT_NOT_FOUND.message,
-        httpErrors.ACCOUNT_NOT_FOUND.code,
-      );
-    }
-    return user;
   }
 }

@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -9,25 +10,18 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
 import { PageDto } from '@shared/dtos/page.dto';
-import { MiniQuizService } from './mini-quiz.service';
 import {
   CreateMiniQuizDto,
-  UpdateMiniQuizDto,
   MiniQuizFilterDto,
+  UpdateMiniQuizDto,
 } from './dtos/mini-quiz.req.dto';
 import { MiniQuizResDto } from './dtos/mini-quiz.res.dto';
+import { MiniQuizService } from './mini-quiz.service';
 
 @ApiTags('Mini Quiz')
-@ApiBearerAuth()
 @Controller('mini-quiz')
 export class MiniQuizController {
   constructor(private readonly miniQuizService: MiniQuizService) {}

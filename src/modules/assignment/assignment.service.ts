@@ -25,16 +25,19 @@ import {
 import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 import { Transactional } from 'typeorm-transactional';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { NotificationService } from '../notification/notification.service';
 import {
   AssignmentFilterDto,
   CreateAssignmentDto,
+  ExtendDeadlineDto,
   GradeAssignmentDto,
   SubmitAssignmentDto,
   UpdateAssignmentDto,
 } from './dtos/assignment.req.dto';
 import {
   AssignmentResDto,
+  AssignmentStatsResDto,
   AssignmentSubmissionResDto,
 } from './dtos/assignment.res.dto';
 
@@ -49,6 +52,7 @@ export class AssignmentService {
     @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
     private readonly classStudentRepo: ClassStudentRepository,
     private readonly notificationService: NotificationService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   // ==================== VALIDATION ====================
@@ -92,7 +96,10 @@ export class AssignmentService {
       );
     }
 
-    const entity = await this.assignmentRepo.createEntity(dto);
+    const entity = await this.assignmentRepo.createEntity({
+      ...dto,
+      allowResubmit: dto.allowResubmit ?? true,
+    });
 
     if (files && files.length > 0) {
       const maxSize = 5 * 1024 * 1024;
@@ -187,6 +194,75 @@ export class AssignmentService {
     await this.assignmentRepo.deleteEntityById(id);
   }
 
+  async closeAssignment(id: number): Promise<AssignmentResDto> {
+    const assignment = await this.validateAssignment(id);
+    const updated = await this.assignmentRepo.updateEntity(assignment, {
+      isClosed: true,
+    });
+    return plainToInstance(AssignmentResDto, updated, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async extendDeadline(
+    id: number,
+    dto: ExtendDeadlineDto,
+  ): Promise<AssignmentResDto> {
+    const assignment = await this.validateAssignment(id);
+
+    const dueDate = new Date(dto.newDueDate);
+    if (dueDate <= new Date()) {
+      throw new httpBadRequest(
+        httpErrors.INVALID_DUE_DATE.message,
+        httpErrors.INVALID_DUE_DATE.code,
+      );
+    }
+
+    const updated = await this.assignmentRepo.updateEntity(assignment, {
+      dueDate,
+    });
+    return plainToInstance(AssignmentResDto, updated, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async getAssignmentStatistics(id: number): Promise<AssignmentStatsResDto> {
+    const assignment = await this.validateAssignment(id);
+
+    // Get total students in class
+    const totalStudents = await this.classStudentRepo.count({
+      where: { classId: assignment.classId },
+    });
+
+    // Get all submissions for this assignment
+    const submissions = await this.submissionRepo.find({
+      where: { assignmentId: id },
+    });
+
+    let onTimeCount = 0;
+    let lateCount = 0;
+
+    const dueDate = new Date(assignment.dueDate).getTime();
+
+    for (const submission of submissions) {
+      const submittedAt = new Date(submission.createdAt).getTime();
+      if (submittedAt > dueDate) {
+        lateCount++;
+      } else {
+        onTimeCount++;
+      }
+    }
+
+    const missingCount = totalStudents - (onTimeCount + lateCount);
+
+    return plainToInstance(AssignmentStatsResDto, {
+      totalStudents,
+      onTimeCount,
+      lateCount,
+      missingCount: missingCount > 0 ? missingCount : 0,
+    });
+  }
+
   // ==================== ASSIGNMENT (STUDENT & TEACHER) ====================
 
   async getAssignmentsByClass(
@@ -221,10 +297,10 @@ export class AssignmentService {
   ): Promise<AssignmentSubmissionResDto> {
     const assignment = await this.validateAssignment(assignmentId);
 
-    if (new Date(assignment.dueDate) < new Date()) {
+    if (assignment.isClosed) {
       throw new httpBadRequest(
-        httpErrors.DEADLINE_PASSED.message,
-        httpErrors.DEADLINE_PASSED.code,
+        httpErrors.ASSIGNMENT_CLOSED.message,
+        httpErrors.ASSIGNMENT_CLOSED.code,
       );
     }
 
@@ -233,6 +309,13 @@ export class AssignmentService {
     });
 
     if (submission) {
+      if (!assignment.allowResubmit) {
+        throw new httpBadRequest(
+          httpErrors.RESUBMIT_NOT_ALLOWED.message,
+          httpErrors.RESUBMIT_NOT_ALLOWED.code,
+        );
+      }
+
       submission = await this.submissionRepo.updateEntity(submission, {
         content: dto.content,
       });
@@ -290,7 +373,63 @@ export class AssignmentService {
     });
   }
 
-  // ==================== GRADING (TEACHER) ====================
+  @Transactional()
+  async deleteSubmissionAttachment(
+    assignmentId: number,
+    attachmentId: number,
+    studentId: number,
+  ): Promise<void> {
+    const assignment = await this.validateAssignment(assignmentId);
+
+    if (assignment.isClosed) {
+      throw new httpBadRequest(
+        httpErrors.ASSIGNMENT_CLOSED.message,
+        httpErrors.ASSIGNMENT_CLOSED.code,
+      );
+    }
+
+    if (!assignment.allowResubmit) {
+      throw new httpBadRequest(
+        httpErrors.RESUBMIT_NOT_ALLOWED.message,
+        httpErrors.RESUBMIT_NOT_ALLOWED.code,
+      );
+    }
+
+    const submission = await this.submissionRepo.findOne({
+      where: { assignmentId, studentId },
+    });
+
+    if (!submission) {
+      throw new httpNotFound(
+        httpErrors.SUBMISSION_NOT_FOUND.message,
+        httpErrors.SUBMISSION_NOT_FOUND.code,
+      );
+    }
+
+    const attachment = await this.submissionAttachmentRepo.findOne({
+      where: { id: attachmentId, submissionId: submission.id },
+    });
+
+    if (!attachment) {
+      throw new httpNotFound(
+        httpErrors.ATTACHMENT_NOT_FOUND.message,
+        httpErrors.ATTACHMENT_NOT_FOUND.code,
+      );
+    }
+
+    if (attachment.url) {
+      const publicId = this.cloudinaryService.extractPublicId(attachment.url);
+      if (publicId) {
+        await this.cloudinaryService.deleteFile(publicId).catch((err) => {
+          console.error('Failed to delete file from Cloudinary', err);
+        });
+      }
+    }
+
+    await this.submissionAttachmentRepo.deleteEntityById(attachment.id);
+  }
+
+  // ==================== GRADE (TEACHER) ====================
 
   async gradeSubmission(
     submissionId: number,

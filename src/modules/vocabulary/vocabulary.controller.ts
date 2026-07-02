@@ -1,3 +1,4 @@
+import { RoleUser } from '@constants/user.constant';
 import {
   Body,
   Controller,
@@ -9,25 +10,18 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleGuard } from '@shared/decorators/guard.decorator';
-import { RoleUser } from '@constants/user.constant';
 import { PageDto } from '@shared/dtos/page.dto';
-import { VocabularyService } from './vocabulary.service';
 import {
   CreateVocabularyDto,
   UpdateVocabularyDto,
   VocabularyFilterDto,
 } from './dtos/vocabulary.req.dto';
 import { VocabularyResDto } from './dtos/vocabulary.res.dto';
+import { VocabularyService } from './vocabulary.service';
 
 @ApiTags('Vocabulary')
-@ApiBearerAuth()
 @Controller('vocabulary')
 export class VocabularyController {
   constructor(private readonly vocabularyService: VocabularyService) {}
