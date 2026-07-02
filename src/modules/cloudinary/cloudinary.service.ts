@@ -1,5 +1,5 @@
 import { MessageAttachmentType } from '@constants/user.constant';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from 'cloudinary';
 export type UploadResult = UploadApiResponse | UploadApiErrorResponse;
 
@@ -7,6 +7,8 @@ import toStream from 'buffer-to-stream';
 
 @Injectable()
 export class CloudinaryService {
+  private readonly logger = new Logger(CloudinaryService.name);
+
   /**
    * Upload file
    */
@@ -24,6 +26,18 @@ export class CloudinaryService {
       );
 
       toStream(file.buffer).pipe(upload);
+    });
+  }
+
+  /**
+   * Delete file by public_id
+   */
+  async deleteFile(publicId: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      void v2.uploader.destroy(publicId, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      });
     });
   }
 
@@ -59,5 +73,27 @@ export class CloudinaryService {
     }
 
     return MessageAttachmentType.FILE;
+  }
+
+  /**
+   * Extract public_id from Cloudinary URL
+   */
+  extractPublicId(url: string): string | null {
+    if (!url) return null;
+    try {
+      const parts = url.split('/');
+      const lastPart = parts.pop();
+      const folderPart = parts.pop();
+      if (!lastPart || !folderPart) return null;
+
+      const filename = lastPart.split('.')[0];
+      return `${folderPart}/${filename}`;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to extract public_id from url: ${url}`,
+        error.stack,
+      );
+      return null;
+    }
   }
 }

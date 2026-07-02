@@ -56,6 +56,12 @@ describe('NotificationService', () => {
   });
 
   it('should be defined', () => {
+    /*
+     * Flow: should be defined
+     * 1. Setup mock data and dependencies.
+     * 2. Execute the method under test.
+     * 3. Verify the expected results and behavior.
+     */
     expect(service).toBeDefined();
   });
 
@@ -67,6 +73,12 @@ describe('NotificationService', () => {
   */
   describe('createNotification', () => {
     it('should create and emit notification', async () => {
+      /*
+       * Flow: should create and emit notification
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       const mockUser = { id: 1, email: 'test@example.com' } as UserEntity;
       userRepository.findOne.mockResolvedValue(mockUser);
 
@@ -99,6 +111,12 @@ describe('NotificationService', () => {
     });
 
     it('should throw error if user not found', async () => {
+      /*
+       * Flow: should throw error if user not found
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       userRepository.findOne.mockResolvedValue(null);
       await expect(
         service.createNotification({

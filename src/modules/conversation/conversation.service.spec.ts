@@ -36,7 +36,10 @@ describe('ConversationService', () => {
     const mockConversationRepo = {
       findOne: jest.fn(),
       findOneBy: jest.fn(),
+      createEntity: jest.fn(),
+      createEntities: jest.fn(),
       create: jest.fn(),
+      updateEntity: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -50,7 +53,10 @@ describe('ConversationService', () => {
     const mockParticipantRepo = {
       findOne: jest.fn(),
       find: jest.fn(),
+      createEntity: jest.fn(),
+      createEntities: jest.fn(),
       create: jest.fn(),
+      updateEntity: jest.fn(),
       save: jest.fn(),
       count: jest.fn(),
     };
@@ -192,14 +198,12 @@ describe('ConversationService', () => {
         name: 'Test Group',
       };
       const createdConv = { id: 1, type: ConversationType.GROUP, ownerId: 1 };
-      conversationRepo.create.mockReturnValue(createdConv as any);
-      conversationRepo.save.mockResolvedValue(createdConv as any);
-      participantRepo.create.mockReturnValue({} as any);
+      conversationRepo.createEntity.mockResolvedValue(createdConv as any);
+      participantRepo.createEntities.mockResolvedValue([] as any);
 
       const result = await service.createConversation(1, dto);
 
-      expect(conversationRepo.save).toHaveBeenCalled();
-      expect(participantRepo.save).toHaveBeenCalled();
+      expect(participantRepo.createEntities).toHaveBeenCalled();
       expect(socketEmitterService.emitCreateConversation).toHaveBeenCalled();
       expect(result).toEqual(createdConv);
     });
@@ -229,8 +233,9 @@ describe('ConversationService', () => {
 
       await service.editConversation(1, 1, { name: 'New Name' });
 
-      expect(conversationRepo.save).toHaveBeenCalledWith(
+      expect(conversationRepo.updateEntity).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'New Name' }),
+        expect.any(Object),
       );
       expect(socketEmitterService.emitEditConversation).toHaveBeenCalled();
     });
@@ -257,8 +262,9 @@ describe('ConversationService', () => {
 
       await service.archiveConversation(1, 1);
 
-      expect(participantRepo.save).toHaveBeenCalledWith(
+      expect(participantRepo.updateEntity).toHaveBeenCalledWith(
         expect.objectContaining({ status: ParticipantStatus.ARCHIVED }),
+        expect.any(Object),
       );
       expect(socketEmitterService.emitArchiveConversation).toHaveBeenCalled();
     });

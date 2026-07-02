@@ -60,12 +60,12 @@ describe('ClassService', () => {
   });
 
   describe('getClassDetails', () => {
-    /*
-     * Flow: Get Class Details (Admin)
-     * 1. Mock classRepo.findOne to return a valid class
-     * 2. Expect class to be returned for Admin
-     */
     it('should return class details for Admin', async () => {
+      /*
+       * Flow: Get Class Details (Admin)
+       * 1. Mock classRepo.findOne to return a valid class
+       * 2. Expect class to be returned for Admin
+       */
       const mockClass = { id: 1, name: 'Test Class', teacherId: 2 };
       classRepo.findOne.mockResolvedValue(mockClass as any);
 
@@ -77,12 +77,12 @@ describe('ClassService', () => {
       expect(result.name).toEqual('Test Class');
     });
 
-    /*
-     * Flow: Get Class Details (Teacher Not Owner)
-     * 1. Mock classRepo.findOne to return a valid class owned by another teacher
-     * 2. Expect httpBadRequest (Unauthorized Access)
-     */
     it('should throw error for Teacher if they do not own the class', async () => {
+      /*
+       * Flow: Get Class Details (Teacher Not Owner)
+       * 1. Mock classRepo.findOne to return a valid class owned by another teacher
+       * 2. Expect httpBadRequest (Unauthorized Access)
+       */
       const mockClass = { id: 1, name: 'Test Class', teacherId: 3 };
       classRepo.findOne.mockResolvedValue(mockClass as any);
 
@@ -96,12 +96,12 @@ describe('ClassService', () => {
   });
 
   describe('createClass', () => {
-    /*
-     * Flow: Create Class
-     * 1. Mock classRepo.create and classRepo.save
-     * 2. Verify class is saved and returned
-     */
     it('should successfully create a new class', async () => {
+      /*
+       * Flow: Create Class
+       * 1. Mock classRepo.create and classRepo.save
+       * 2. Verify class is saved and returned
+       */
       const dto = { name: 'New Class', courseId: 1 };
       const mockSaved = { id: 1, name: 'New Class', courseId: 1 };
       classRepo.create.mockReturnValue(mockSaved as any);

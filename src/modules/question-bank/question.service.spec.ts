@@ -109,7 +109,7 @@ describe('QuestionService', () => {
         id: 10,
         content: 'Q1',
       } as any);
-      questionRepo.save.mockResolvedValueOnce({
+      questionRepo.createEntity.mockResolvedValueOnce({
         id: 10,
         content: 'Q1',
       } as any);

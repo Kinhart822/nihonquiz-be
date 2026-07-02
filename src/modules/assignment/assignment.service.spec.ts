@@ -12,8 +12,10 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   httpBadRequest,
+  httpErrors,
   httpNotFound,
 } from '@shared/exceptions/http-exception';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { NotificationService } from '../notification/notification.service';
 import { AssignmentService } from './assignment.service';
 
@@ -25,6 +27,7 @@ describe('AssignmentService', () => {
   let service: AssignmentService;
   let assignmentRepo: jest.Mocked<AssignmentRepository>;
   let submissionRepo: jest.Mocked<AssignmentSubmissionRepository>;
+  let submissionAttachmentRepo: jest.Mocked<AssignmentSubmissionAttachmentRepository>;
   let classRepo: jest.Mocked<ClassRepository>;
 
   beforeEach(async () => {
@@ -63,7 +66,10 @@ describe('AssignmentService', () => {
         },
         {
           provide: AssignmentSubmissionAttachmentRepository,
-          useValue: {},
+          useValue: {
+            findOne: jest.fn(),
+            deleteEntityById: jest.fn(),
+          },
         },
         {
           provide: ClassStudentRepository,
@@ -83,22 +89,32 @@ describe('AssignmentService', () => {
             add: jest.fn(),
           },
         },
+        {
+          provide: CloudinaryService,
+          useValue: {
+            extractPublicId: jest.fn().mockReturnValue('mock-id'),
+            deleteFile: jest.fn().mockResolvedValue(true),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<AssignmentService>(AssignmentService);
     assignmentRepo = module.get(AssignmentRepository);
     submissionRepo = module.get(AssignmentSubmissionRepository);
+    submissionAttachmentRepo = module.get(
+      AssignmentSubmissionAttachmentRepository,
+    );
     classRepo = module.get(ClassRepository);
   });
 
   describe('createAssignment', () => {
-    /*
-     * Flow: Create Assignment (Class not found)
-     * 1. Mock classRepo.getEntityById to return null
-     * 2. Expect createAssignment to throw httpNotFound
-     */
     it('should throw httpNotFound if class does not exist', async () => {
+      /*
+       * Flow: Create Assignment (Class not found)
+       * 1. Mock classRepo.getEntityById to return null
+       * 2. Expect createAssignment to throw httpNotFound
+       */
       classRepo.getEntityById.mockResolvedValue(null);
 
       await expect(
@@ -110,12 +126,12 @@ describe('AssignmentService', () => {
       ).rejects.toThrow(httpNotFound);
     });
 
-    /*
-     * Flow: Create Assignment (Past due date)
-     * 1. Mock classRepo.getEntityById to return a valid class
-     * 2. Expect createAssignment to throw httpBadRequest because dueDate is in the past
-     */
     it('should throw httpBadRequest if due date is in the past', async () => {
+      /*
+       * Flow: Create Assignment (Past due date)
+       * 1. Mock classRepo.getEntityById to return a valid class
+       * 2. Expect createAssignment to throw httpBadRequest because dueDate is in the past
+       */
       classRepo.getEntityById.mockResolvedValue({ id: 1 } as ClassEntity);
 
       await expect(
@@ -127,13 +143,13 @@ describe('AssignmentService', () => {
       ).rejects.toThrow(httpBadRequest);
     });
 
-    /*
-     * Flow: Create Assignment Success
-     * 1. Mock classRepo.getEntityById to return a valid class
-     * 2. Mock assignmentRepo.createEntity to return a new assignment
-     * 3. Verify the assignment is created successfully
-     */
     it('should successfully create an assignment', async () => {
+      /*
+       * Flow: Create Assignment Success
+       * 1. Mock classRepo.getEntityById to return a valid class
+       * 2. Mock assignmentRepo.createEntity to return a new assignment
+       * 3. Verify the assignment is created successfully
+       */
       classRepo.getEntityById.mockResolvedValue({ id: 1 } as ClassEntity);
       const mockAssignment = { id: 1, title: 'Test' };
       assignmentRepo.createEntity.mockResolvedValue(mockAssignment as any);
@@ -150,17 +166,17 @@ describe('AssignmentService', () => {
   });
 
   describe('submitAssignment', () => {
-    /*
-     * Flow: Submit Assignment (Deadline passed)
-     * 1. Mock assignmentRepo.getEntityById to return an assignment with a past dueDate
-     * 2. Expect submitAssignment to throw httpBadRequest
-     */
     it('should throw httpBadRequest if deadline passed', async () => {
+      /*
+       * Flow: Submit Assignment (Deadline passed)
+       * 1. Mock assignmentRepo.getEntityById to return an assignment with a past dueDate
+       * 2. Expect submitAssignment to throw httpBadRequest
+       */
       const pastDate = new Date();
       pastDate.setMinutes(pastDate.getMinutes() - 10);
       assignmentRepo.getEntityById.mockResolvedValue({
         id: 1,
-        dueDate: pastDate,
+        isClosed: true,
       } as AssignmentEntity);
 
       await expect(
@@ -168,14 +184,14 @@ describe('AssignmentService', () => {
       ).rejects.toThrow(httpBadRequest);
     });
 
-    /*
-     * Flow: Submit Assignment (New submission)
-     * 1. Mock assignmentRepo.getEntityById with a future dueDate
-     * 2. Mock submissionRepo.findOne to return null (no existing submission)
-     * 3. Mock submissionRepo.createEntity to return a new submission
-     * 4. Verify a new submission is created
-     */
     it('should create new submission if not exists', async () => {
+      /*
+       * Flow: Submit Assignment (New submission)
+       * 1. Mock assignmentRepo.getEntityById with a future dueDate
+       * 2. Mock submissionRepo.findOne to return null (no existing submission)
+       * 3. Mock submissionRepo.createEntity to return a new submission
+       * 4. Verify a new submission is created
+       */
       const futureDate = new Date();
       futureDate.setMinutes(futureDate.getMinutes() + 10);
 
@@ -195,20 +211,21 @@ describe('AssignmentService', () => {
       expect(submissionRepo.createEntity).toHaveBeenCalled();
     });
 
-    /*
-     * Flow: Submit Assignment (Resubmit)
-     * 1. Mock assignmentRepo.getEntityById with a future dueDate
-     * 2. Mock submissionRepo.findOne to return an existing submission
-     * 3. Mock submissionRepo.updateEntity to update the submission
-     * 4. Verify the existing submission is updated
-     */
     it('should update existing submission if exists (resubmit)', async () => {
+      /*
+       * Flow: Submit Assignment (Resubmit)
+       * 1. Mock assignmentRepo.getEntityById with a future dueDate
+       * 2. Mock submissionRepo.findOne to return an existing submission
+       * 3. Mock submissionRepo.updateEntity to update the submission
+       * 4. Verify the existing submission is updated
+       */
       const futureDate = new Date();
       futureDate.setMinutes(futureDate.getMinutes() + 10);
 
       assignmentRepo.getEntityById.mockResolvedValue({
         id: 1,
         dueDate: futureDate,
+        allowResubmit: true,
       } as AssignmentEntity);
       submissionRepo.findOne.mockResolvedValue({
         id: 1,
@@ -226,15 +243,70 @@ describe('AssignmentService', () => {
       expect(result.id).toEqual(1);
       expect(submissionRepo.updateEntity).toHaveBeenCalled();
     });
+
+    it('should throw httpBadRequest if resubmission is not allowed', async () => {
+      const futureDate = new Date();
+      futureDate.setMinutes(futureDate.getMinutes() + 10);
+
+      assignmentRepo.getEntityById.mockResolvedValue({
+        id: 1,
+        dueDate: futureDate,
+        allowResubmit: false,
+      } as AssignmentEntity);
+      submissionRepo.findOne.mockResolvedValue({
+        id: 1,
+        content: 'old',
+      } as any);
+
+      await expect(
+        service.submitAssignment(1, 1, { content: 'new test' }),
+      ).rejects.toThrow(httpErrors.RESUBMIT_NOT_ALLOWED.message);
+    });
+  });
+
+  describe('deleteSubmissionAttachment', () => {
+    it('should delete submission attachment successfully', async () => {
+      const futureDate = new Date();
+      futureDate.setMinutes(futureDate.getMinutes() + 10);
+
+      assignmentRepo.getEntityById.mockResolvedValue({
+        id: 1,
+        dueDate: futureDate,
+        allowResubmit: true,
+      } as AssignmentEntity);
+
+      submissionRepo.findOne.mockResolvedValue({
+        id: 1,
+      } as any);
+
+      submissionAttachmentRepo.findOne.mockResolvedValue({
+        id: 1,
+      } as any);
+
+      await service.deleteSubmissionAttachment(1, 1, 1);
+
+      expect(submissionAttachmentRepo.deleteEntityById).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw if assignment is closed', async () => {
+      assignmentRepo.getEntityById.mockResolvedValue({
+        id: 1,
+        isClosed: true,
+      } as AssignmentEntity);
+
+      await expect(service.deleteSubmissionAttachment(1, 1, 1)).rejects.toThrow(
+        httpErrors.ASSIGNMENT_CLOSED.message,
+      );
+    });
   });
 
   describe('gradeSubmission', () => {
-    /*
-     * Flow: Grade Submission (Not found)
-     * 1. Mock submissionRepo.getEntityById to return null
-     * 2. Expect gradeSubmission to throw httpNotFound
-     */
     it('should throw httpNotFound if submission not found', async () => {
+      /*
+       * Flow: Grade Submission (Not found)
+       * 1. Mock submissionRepo.getEntityById to return null
+       * 2. Expect gradeSubmission to throw httpNotFound
+       */
       submissionRepo.getEntityById.mockResolvedValue(null);
 
       await expect(service.gradeSubmission(1, { score: 100 })).rejects.toThrow(
@@ -242,13 +314,13 @@ describe('AssignmentService', () => {
       );
     });
 
-    /*
-     * Flow: Grade Submission Success
-     * 1. Mock submissionRepo.getEntityById to return a valid submission
-     * 2. Mock submissionRepo.updateEntity to update score and feedback
-     * 3. Verify the submission is graded successfully
-     */
     it('should grade submission successfully', async () => {
+      /*
+       * Flow: Grade Submission Success
+       * 1. Mock submissionRepo.getEntityById to return a valid submission
+       * 2. Mock submissionRepo.updateEntity to update score and feedback
+       * 3. Verify the submission is graded successfully
+       */
       submissionRepo.getEntityById.mockResolvedValue({
         id: 1,
       } as AssignmentSubmissionEntity);

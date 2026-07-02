@@ -1,13 +1,8 @@
-import { Column, type DeepPartial, Entity } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '../../shared/base-entity';
 
 @Entity('email_logs')
 export class EmailLogEntity extends BaseEntity {
-  constructor(partial?: DeepPartial<EmailLogEntity>) {
-    super();
-    Object.assign(this, partial);
-  }
-
   @Column({ name: 'from', type: 'varchar', nullable: true })
   fromEmail!: string | null;
 

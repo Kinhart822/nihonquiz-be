@@ -36,6 +36,12 @@ describe('LessonService', () => {
   });
 
   it('should be defined', () => {
+    /*
+     * Flow: should be defined
+     * 1. Setup mock data and dependencies.
+     * 2. Execute the method under test.
+     * 3. Verify the expected results and behavior.
+     */
     expect(service).toBeDefined();
   });
 

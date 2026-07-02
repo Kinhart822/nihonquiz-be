@@ -25,7 +25,9 @@ describe('PracticeTestService', () => {
     };
 
     const mockTestAttemptRepo = {
+      createEntity: jest.fn(),
       create: jest.fn(),
+      updateEntity: jest.fn(),
       save: jest.fn(),
       findOne: jest.fn(),
       find: jest.fn(),
@@ -140,7 +142,7 @@ describe('PracticeTestService', () => {
        * 3. Call service method and verify attempt id
        */
       practiceTestRepo.getEntityById.mockResolvedValueOnce({ id: 1 } as any);
-      testAttemptRepo.create.mockReturnValue({
+      testAttemptRepo.createEntity.mockReturnValue({
         id: 10,
         userId: 2,
         practiceTestId: 1,
@@ -153,7 +155,7 @@ describe('PracticeTestService', () => {
 
       const result = await service.startTest(2, 1);
       expect(result.id).toBe(10);
-      expect(testAttemptRepo.save).toHaveBeenCalled();
+      expect(testAttemptRepo.createEntity).toHaveBeenCalled();
     });
   });
 
@@ -258,7 +260,7 @@ describe('PracticeTestService', () => {
        * 3. Verify repository delete method is called with correct id
        */
       practiceTestRepo.getEntityById.mockResolvedValueOnce({ id: 1 } as any);
-      practiceTestRepo.deleteEntityById.mockResolvedValueOnce(undefined);
+      practiceTestRepo.deleteEntityById.mockResolvedValueOnce(true);
 
       await service.deletePracticeTest(1);
       expect(practiceTestRepo.deleteEntityById).toHaveBeenCalledWith(1);

@@ -25,6 +25,7 @@ describe('MailConsumer', () => {
   };
 
   const mockEmailLogRepo = {
+    create: jest.fn().mockImplementation((dto) => dto),
     save: jest.fn(),
   };
 

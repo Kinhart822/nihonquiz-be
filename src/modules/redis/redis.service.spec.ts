@@ -39,6 +39,12 @@ describe('RedisService', () => {
   });
 
   it('should be defined', () => {
+    /*
+     * Flow: should be defined
+     * 1. Setup mock data and dependencies.
+     * 2. Execute the method under test.
+     * 3. Verify the expected results and behavior.
+     */
     expect(service).toBeDefined();
   });
 
@@ -56,18 +62,36 @@ describe('RedisService', () => {
     });
 
     it('should return default value if key not found', async () => {
+      /*
+       * Flow: should return default value if key not found
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.get.mockResolvedValue(null);
       const result = await service.get('key', 'default');
       expect(result).toBe('default');
     });
 
     it('should parse JSON if value is stringified JSON', async () => {
+      /*
+       * Flow: should parse JSON if value is stringified JSON
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.get.mockResolvedValue('{"a":1}');
       const result = await service.get('key');
       expect(result).toEqual({ a: 1 });
     });
 
     it('should return original string if not JSON', async () => {
+      /*
+       * Flow: should return original string if not JSON
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.get.mockResolvedValue('string');
       const result = await service.get('key');
       expect(result).toBe('string');
@@ -86,6 +110,12 @@ describe('RedisService', () => {
     });
 
     it('should set value with TTL', async () => {
+      /*
+       * Flow: should set value with TTL
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.set('key', 'value', '1h');
       expect(redisClient.setEx).toHaveBeenCalledWith('key', 3600, 'value');
     });
@@ -93,6 +123,12 @@ describe('RedisService', () => {
 
   describe('del', () => {
     it('should delete key', async () => {
+      /*
+       * Flow: should delete key
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.del('key');
       expect(redisClient.del).toHaveBeenCalledWith('key');
     });
@@ -100,11 +136,23 @@ describe('RedisService', () => {
 
   describe('delMany', () => {
     it('should not call redis del if array is empty', async () => {
+      /*
+       * Flow: should not call redis del if array is empty
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.delMany([]);
       expect(redisClient.del).not.toHaveBeenCalled();
     });
 
     it('should call redis del with keys', async () => {
+      /*
+       * Flow: should call redis del with keys
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.delMany(['key1', 'key2']);
       expect(redisClient.del).toHaveBeenCalledWith(['key1', 'key2']);
     });
@@ -112,12 +160,24 @@ describe('RedisService', () => {
 
   describe('exists', () => {
     it('should return true if exists', async () => {
+      /*
+       * Flow: should return true if exists
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.exists.mockResolvedValue(1);
       const result = await service.exists('key');
       expect(result).toBe(true);
     });
 
     it('should return false if not exists', async () => {
+      /*
+       * Flow: should return false if not exists
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.exists.mockResolvedValue(0);
       const result = await service.exists('key');
       expect(result).toBe(false);
@@ -126,11 +186,23 @@ describe('RedisService', () => {
 
   describe('getMany', () => {
     it('should return empty array if keys empty', async () => {
+      /*
+       * Flow: should return empty array if keys empty
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       const result = await service.getMany([]);
       expect(result).toEqual([]);
     });
 
     it('should parse results correctly', async () => {
+      /*
+       * Flow: should parse results correctly
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.mGet.mockResolvedValue(['{"a":1}', null, 'str']);
       const result = await service.getMany(['k1', 'k2', 'k3']);
       expect(result).toEqual([{ a: 1 }, null, 'str']);
@@ -139,11 +211,23 @@ describe('RedisService', () => {
 
   describe('setMany', () => {
     it('should do nothing if empty', async () => {
+      /*
+       * Flow: should do nothing if empty
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.setMany({});
       expect(redisClient.multi).not.toHaveBeenCalled();
     });
 
     it('should set values without TTL', async () => {
+      /*
+       * Flow: should set values without TTL
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       const mockMulti = { set: jest.fn(), exec: jest.fn() };
       redisClient.multi.mockReturnValue(mockMulti);
       await service.setMany({ k1: 'v1', k2: { a: 1 } });
@@ -153,6 +237,12 @@ describe('RedisService', () => {
     });
 
     it('should set values with TTL', async () => {
+      /*
+       * Flow: should set values with TTL
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       const mockMulti = { setEx: jest.fn(), exec: jest.fn() };
       redisClient.multi.mockReturnValue(mockMulti);
       await service.setMany({ k1: 'v1' }, '1h');
@@ -192,6 +282,12 @@ describe('RedisService', () => {
     });
 
     it('should delete key if factory returns undefined', async () => {
+      /*
+       * Flow: should delete key if factory returns undefined
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.get.mockResolvedValue(null);
       const factory = jest.fn().mockResolvedValue(undefined);
       await service.remember('key', factory);
@@ -201,6 +297,12 @@ describe('RedisService', () => {
 
   describe('increment', () => {
     it('should call incrBy', async () => {
+      /*
+       * Flow: should call incrBy
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.incrBy.mockResolvedValue(2);
       const result = await service.increment('key', 2);
       expect(redisClient.incrBy).toHaveBeenCalledWith('key', 2);
@@ -210,6 +312,12 @@ describe('RedisService', () => {
 
   describe('decrement', () => {
     it('should call decrBy', async () => {
+      /*
+       * Flow: should call decrBy
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.decrBy.mockResolvedValue(0);
       const result = await service.decrement('key', 2);
       expect(redisClient.decrBy).toHaveBeenCalledWith('key', 2);
@@ -219,6 +327,12 @@ describe('RedisService', () => {
 
   describe('keys', () => {
     it('should call keys', async () => {
+      /*
+       * Flow: should call keys
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.keys.mockResolvedValue(['k1']);
       const result = await service.keys('k*');
       expect(redisClient.keys).toHaveBeenCalledWith('k*');
@@ -228,6 +342,12 @@ describe('RedisService', () => {
 
   describe('expire', () => {
     it('should call expire and return true if successful', async () => {
+      /*
+       * Flow: should call expire and return true if successful
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.expire.mockResolvedValue(1);
       const result = await service.expire('key', '1h');
       expect(redisClient.expire).toHaveBeenCalledWith('key', 3600);
@@ -235,6 +355,12 @@ describe('RedisService', () => {
     });
 
     it('should return false if invalid TTL', async () => {
+      /*
+       * Flow: should return false if invalid TTL
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       const result = await service.expire('key', undefined as any);
       expect(result).toBe(false);
     });
@@ -242,6 +368,12 @@ describe('RedisService', () => {
 
   describe('ttl', () => {
     it('should call ttl', async () => {
+      /*
+       * Flow: should call ttl
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.ttl.mockResolvedValue(3600);
       const result = await service.ttl('key');
       expect(redisClient.ttl).toHaveBeenCalledWith('key');
@@ -265,6 +397,12 @@ describe('RedisService', () => {
     });
 
     it('should return 0 if no matching keys', async () => {
+      /*
+       * Flow: should return 0 if no matching keys
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       redisClient.keys.mockResolvedValue([]);
       const result = await service.clearByPattern('k*');
       expect(result).toBe(0);
@@ -273,25 +411,55 @@ describe('RedisService', () => {
 
   describe('parseTTL (internal via set)', () => {
     it('should throw error for invalid format', async () => {
+      /*
+       * Flow: should throw error for invalid format
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await expect(service.set('key', 'value', 'invalid')).rejects.toThrow();
     });
 
     it('should handle d unit', async () => {
+      /*
+       * Flow: should handle d unit
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.set('key', 'value', '1d');
       expect(redisClient.setEx).toHaveBeenCalledWith('key', 86400, 'value');
     });
 
     it('should handle s unit', async () => {
+      /*
+       * Flow: should handle s unit
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.set('key', 'value', '10s');
       expect(redisClient.setEx).toHaveBeenCalledWith('key', 10, 'value');
     });
 
     it('should handle m unit', async () => {
+      /*
+       * Flow: should handle m unit
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.set('key', 'value', '10m');
       expect(redisClient.setEx).toHaveBeenCalledWith('key', 600, 'value');
     });
 
     it('should handle numeric ttl', async () => {
+      /*
+       * Flow: should handle numeric ttl
+       * 1. Setup mock data and dependencies.
+       * 2. Execute the method under test.
+       * 3. Verify the expected results and behavior.
+       */
       await service.set('key', 'value', 123);
       expect(redisClient.setEx).toHaveBeenCalledWith('key', 123, 'value');
     });

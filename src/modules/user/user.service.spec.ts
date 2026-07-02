@@ -29,6 +29,8 @@ describe('UserService', () => {
 
   beforeEach(async () => {
     const mockUserRepo = {
+      getEntityById: jest.fn(),
+      updateEntity: jest.fn(),
       findOne: jest.fn(),
       existsBy: jest.fn(),
       save: jest.fn(),
@@ -71,6 +73,12 @@ describe('UserService', () => {
   });
 
   it('should be defined', () => {
+    /*
+     * Flow: should be defined
+     * 1. Setup mock data and dependencies.
+     * 2. Execute the method under test.
+     * 3. Verify the expected results and behavior.
+     */
     expect(service).toBeDefined();
   });
 
@@ -81,10 +89,10 @@ describe('UserService', () => {
        * 1. Query User DB by ID.
        * 2. If null, throw NotFound exception.
        */
-      userRepo.findOne.mockResolvedValue(null);
+      userRepo.getEntityById.mockResolvedValue(null);
 
       await expect(service.getProfile(1)).rejects.toThrow(httpNotFound);
-      expect(userRepo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(userRepo.getEntityById).toHaveBeenCalledWith(1);
     });
 
     it('should return user profile if user exists', async () => {
@@ -94,14 +102,14 @@ describe('UserService', () => {
        * 2. If exists, return user entity.
        */
       const mockUser = { id: 1, username: 'testuser', email: 'test@test.com' };
-      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.getEntityById.mockResolvedValue(mockUser as any);
 
       const result = await service.getProfile(1);
 
       expect(result).toBeDefined();
       expect(result.id).toBe(1);
       expect(result.username).toBe('testuser');
-      expect(userRepo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(userRepo.getEntityById).toHaveBeenCalledWith(1);
     });
   });
 
@@ -112,7 +120,7 @@ describe('UserService', () => {
        * 1. Attempt to find the user in DB.
        * 2. If user doesn't exist, throw NotFound exception.
        */
-      userRepo.findOne.mockResolvedValue(null);
+      userRepo.getEntityById.mockResolvedValue(null);
 
       await expect(service.updateProfile(1, {})).rejects.toThrow(httpNotFound);
     });
@@ -124,7 +132,7 @@ describe('UserService', () => {
        * 2. If duplicate, throw BadRequest exception.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.getEntityById.mockResolvedValue(mockUser as any);
       userRepo.existsBy.mockResolvedValue(true);
 
       await expect(
@@ -143,7 +151,7 @@ describe('UserService', () => {
        * 3. If file exceeds the limit, throw BadRequest exception.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.getEntityById.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(100); // 100 bytes max
 
       const avatarFile = { size: 200, originalname: 'avatar.png' } as any;
@@ -162,7 +170,7 @@ describe('UserService', () => {
        * 4. Save DB record & return success message.
        */
       const mockUser: any = { id: 1, username: 'olduser' };
-      userRepo.findOne.mockResolvedValue(mockUser);
+      userRepo.getEntityById.mockResolvedValue(mockUser);
       configService.get.mockReturnValue(1000); // 1000 bytes max
 
       const avatarFile = {
@@ -191,7 +199,10 @@ describe('UserService', () => {
           },
         },
       );
-      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
+      expect(userRepo.updateEntity).toHaveBeenCalledWith(
+        mockUser,
+        expect.any(Object),
+      );
       expect(result).toEqual({ message: UPDATE_PROFILE_RES });
     });
 
@@ -203,7 +214,7 @@ describe('UserService', () => {
        * 3. Save DB record & return success message.
        */
       const mockUser = { id: 1, username: 'olduser' };
-      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.getEntityById.mockResolvedValue(mockUser as any);
       configService.get.mockReturnValue(1000);
 
       const bgFile = {
@@ -232,7 +243,10 @@ describe('UserService', () => {
           },
         },
       );
-      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
+      expect(userRepo.updateEntity).toHaveBeenCalledWith(
+        mockUser,
+        expect.any(Object),
+      );
       expect(result).toEqual({ message: UPDATE_PROFILE_RES });
     });
   });
@@ -244,7 +258,7 @@ describe('UserService', () => {
        * 1. Query user by ID.
        * 2. If user does not exist, throw NotFound exception.
        */
-      userRepo.findOne.mockResolvedValue(null);
+      userRepo.getEntityById.mockResolvedValue(null);
 
       await expect(
         service.changePassword(1, { oldPassword: 'old', newPassword: 'new' }),
@@ -257,7 +271,7 @@ describe('UserService', () => {
        * 1. Query user by ID.
        * 2. If user exists but has no password (e.g. social login), throw BadRequest exception.
        */
-      userRepo.findOne.mockResolvedValue({ id: 1 } as any);
+      userRepo.getEntityById.mockResolvedValue({ id: 1 } as any);
 
       await expect(
         service.changePassword(1, { oldPassword: 'old', newPassword: 'new' }),
@@ -271,7 +285,10 @@ describe('UserService', () => {
        * 2. Compare provided old password with stored hashed password.
        * 3. If mismatch, throw BadRequest exception.
        */
-      userRepo.findOne.mockResolvedValue({ id: 1, password: 'hashed' } as any);
+      userRepo.getEntityById.mockResolvedValue({
+        id: 1,
+        password: 'hashed',
+      } as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
@@ -287,7 +304,7 @@ describe('UserService', () => {
        * 3. Update user entity and save to DB.
        */
       const mockUser = { id: 1, password: 'old_hashed' };
-      userRepo.findOne.mockResolvedValue(mockUser as any);
+      userRepo.getEntityById.mockResolvedValue(mockUser as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (bcrypt.hash as jest.Mock).mockResolvedValue('new_hashed');
 
@@ -297,7 +314,10 @@ describe('UserService', () => {
       });
 
       expect(mockUser.password).toBe('new_hashed');
-      expect(userRepo.save).toHaveBeenCalledWith(mockUser);
+      expect(userRepo.updateEntity).toHaveBeenCalledWith(
+        mockUser,
+        expect.any(Object),
+      );
       expect(result).toEqual({ message: 'Password changed successfully' });
     });
   });

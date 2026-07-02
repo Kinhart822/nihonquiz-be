@@ -183,7 +183,7 @@ describe('MiniQuizService', () => {
        * 3. Verify delete method is called with correct id
        */
       miniQuizRepo.getEntityById.mockResolvedValueOnce({ id: 10 } as any);
-      miniQuizRepo.deleteEntityById.mockResolvedValueOnce(undefined);
+      miniQuizRepo.deleteEntityById.mockResolvedValueOnce(true);
 
       await service.deleteMiniQuiz(10);
       expect(miniQuizRepo.deleteEntityById).toHaveBeenCalledWith(10);

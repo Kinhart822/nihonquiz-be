@@ -48,6 +48,28 @@ export class SocketEmitterService implements OnModuleInit {
     }
   }
 
+  /**
+   * Emit event to a conversation room
+   */
+  emitEventToConversation(
+    conversationId: number,
+    event: SocketEvent,
+    data: any,
+  ): void {
+    try {
+      const room = getConversationRoomById(conversationId);
+      const payload: SocketEventDto = { event, data };
+
+      this.logger.log(`Emitting event ${event} to conversation room ${room}`);
+      this.__emitter.to(room).emit(event, payload);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to emit event ${event} to conversation ${conversationId}`,
+        error.stack,
+      );
+    }
+  }
+
   // ==================== QUESTION BANK ====================
   emitQuestionImportCompleted(email: string, data: any): void {
     this.emitEvent(email, SocketEvent.QUESTION_BANK_IMPORT_COMPLETED, data);
@@ -82,27 +104,7 @@ export class SocketEmitterService implements OnModuleInit {
     this.emitEvent(email, SocketEvent.PROFILE_STATUS_CHANGE, data);
   }
 
-  // Emit event to a conversation room
-  emitEventToConversation(
-    conversationId: number,
-    event: SocketEvent,
-    data: any,
-  ): void {
-    try {
-      const room = getConversationRoomById(conversationId);
-      const payload: SocketEventDto = { event, data };
-
-      this.logger.log(`Emitting event ${event} to conversation room ${room}`);
-      this.__emitter.to(room).emit(event, payload);
-    } catch (error: any) {
-      this.logger.error(
-        `Failed to emit event ${event} to conversation ${conversationId}`,
-        error.stack,
-      );
-    }
-  }
-
-  // Message Events
+  // ==================== MESSAGE ====================
   emitNewMessage(conversationId: number, data: any): void {
     this.emitEventToConversation(conversationId, SocketEvent.NEW_MESSAGE, data);
   }
@@ -155,7 +157,7 @@ export class SocketEmitterService implements OnModuleInit {
     }
   }
 
-  // Friend Events
+  // ==================== FRIEND ====================
   emitSendFriendRequest(email: string, data: any): void {
     this.emitEvent(email, SocketEvent.SEND_FRIEND_REQUEST, data);
   }
@@ -176,7 +178,7 @@ export class SocketEmitterService implements OnModuleInit {
     this.emitEvent(email, SocketEvent.UNBLOCK_FRIEND, data);
   }
 
-  // Conversation Events
+  // ==================== CONVERSATION ====================
   emitCreateConversation(conversationId: number, data: any): void {
     this.emitEventToConversation(
       conversationId,
@@ -253,7 +255,7 @@ export class SocketEmitterService implements OnModuleInit {
     this.emitEvent(email, SocketEvent.REMOVE_CONVERSATION, data);
   }
 
-  // Group Events
+  // ==================== GROUP ====================
   emitAddMemberToGroup(conversationId: number, data: any): void {
     this.emitEventToConversation(
       conversationId,

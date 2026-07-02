@@ -10,7 +10,6 @@ import { UserRepository } from '@repositories/user.repository';
 import { TypeOrmExModule } from '@shared/decorators/typeorm.module';
 
 import { FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
-import { SystemConfigModule } from '@modules/system-config/system-config.module';
 import { BullModule } from '@nestjs/bullmq';
 import { FileUploadProcessor } from '../../shared/queues/file-upload.processor';
 import { MessageController } from './message.controller';
@@ -30,7 +29,6 @@ import { NotificationModule } from '../notification/notification.module';
     ]),
     CloudinaryModule,
     AdminModule,
-    SystemConfigModule,
     BullModule.registerQueue({
       name: FILE_UPLOAD_QUEUE,
     }),

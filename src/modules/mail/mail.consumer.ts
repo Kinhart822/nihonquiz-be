@@ -7,7 +7,6 @@ import { EmailLogRepository } from '@repositories/email-log.repository';
 import type { Job } from 'bullmq';
 import { IMailMessage } from './interfaces/mail.interface';
 import { MailService } from './mail.service';
-import { EmailLogEntity } from '@entities/email-log.entity';
 
 @Injectable()
 @Processor(MAIL_QUEUE, {
@@ -70,7 +69,7 @@ export class MailConsumer extends WorkerHost {
     const { email, token, type } = job.data;
     const fromEmail = this.configService.get('MAIL_FROM');
 
-    const emailLog = new EmailLogEntity({
+    const emailLog = this.emailLogRepo.create({
       fromEmail,
       toEmail: email,
       subject: config.subject,
