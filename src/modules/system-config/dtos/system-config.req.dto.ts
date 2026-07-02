@@ -54,3 +54,35 @@ export class SystemConfigFilterDto extends PageOptionsDto {
   })
   readonly direction: Order = Order.DESC;
 }
+
+export class UpdateSiteInfoDto {
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  siteName?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  facebookUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  address?: string;
+}

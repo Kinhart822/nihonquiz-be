@@ -1,6 +1,10 @@
+import { SYSTEM_CONFIG } from '@constants/config.constant';
+import { FILE_UPLOAD_JOB, FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
+import { SystemConfigStatus } from '@constants/system-config.constant';
 import { SystemConfigEntity } from '@entities/system-config.entity';
 import { SystemConfigResDto } from '@modules/system-config/dtos/system-config.res.dto';
-import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 import { SystemConfigRepository } from '@repositories/system-config.repository';
 import { PageMetaDto } from '@shared/dtos/page-meta.dto';
 import { PageDto } from '@shared/dtos/page.dto';
@@ -9,17 +13,23 @@ import {
   httpErrors,
   httpNotFound,
 } from '@shared/exceptions/http-exception';
+import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
-import { SystemConfigFilterDto } from './dtos/system-config.req.dto';
+import {
+  SystemConfigFilterDto,
+  UpdateSiteInfoDto,
+} from './dtos/system-config.req.dto';
 
 @Injectable()
 export class SystemConfigService {
-  constructor(private readonly systemConfigRepo: SystemConfigRepository) {}
+  private readonly logger = new Logger(SystemConfigService.name);
+
+  constructor(
+    private readonly systemConfigRepo: SystemConfigRepository,
+    @InjectQueue(FILE_UPLOAD_QUEUE) private readonly fileUploadQueue: Queue,
+  ) {}
 
   // ==================== VALIDATION ====================
-  /**
-   * Validate key
-   */
   private async validateKey(key: string): Promise<SystemConfigEntity> {
     const config = await this.systemConfigRepo
       .createQueryBuilder('config')
@@ -34,9 +44,6 @@ export class SystemConfigService {
     return config;
   }
 
-  /**
-   * Map system config to response DTO
-   */
   private mapSystemConfigToResponse(
     systemConfig: SystemConfigEntity,
   ): SystemConfigResDto {
@@ -106,5 +113,101 @@ export class SystemConfigService {
       );
     }
     return this.systemConfigRepo.deleteEntitiesByCondition({ key: config.key });
+  }
+
+  // ==================== MAINTENANCE ====================
+  async toggleMaintenance(isMaintenance: boolean) {
+    let config = await this.systemConfigRepo.findOne({
+      where: { key: SYSTEM_CONFIG.MAINTENANCE_MODE.key },
+    });
+
+    const value = isMaintenance ? 'true' : 'false';
+
+    if (!config) {
+      config = await this.systemConfigRepo.createEntity({
+        key: SYSTEM_CONFIG.MAINTENANCE_MODE.key,
+        value,
+        description: SYSTEM_CONFIG.MAINTENANCE_MODE.description,
+      });
+    } else {
+      config = await this.systemConfigRepo.updateEntity(config, { value });
+    }
+
+    return this.mapSystemConfigToResponse(config);
+  }
+
+  async isMaintenanceMode(): Promise<{ isMaintenance: boolean }> {
+    const config = await this.systemConfigRepo.findOne({
+      where: { key: SYSTEM_CONFIG.MAINTENANCE_MODE.key },
+    });
+    return {
+      isMaintenance: config ? config.value === 'true' : false,
+    };
+  }
+
+  // ==================== SITE INFO ====================
+  async getSiteInfo(): Promise<UpdateSiteInfoDto> {
+    const config = await this.systemConfigRepo.findOne({
+      where: { key: SYSTEM_CONFIG.SITE_INFO.key },
+    });
+
+    if (!config) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(config.value);
+    } catch (error) {
+      this.logger.error(`Failed to parse SITE_INFO configuration`, error);
+      return {};
+    }
+  }
+
+  async updateSiteInfo(data: UpdateSiteInfoDto, file?: Express.Multer.File) {
+    let config = await this.systemConfigRepo.findOne({
+      where: { key: SYSTEM_CONFIG.SITE_INFO.key },
+    });
+
+    if (file) {
+      await this.fileUploadQueue.add(FILE_UPLOAD_JOB.UPLOAD_SITE_LOGO, {
+        file: {
+          buffer: file.buffer,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        },
+      });
+    }
+
+    let existingData = {};
+    if (config) {
+      try {
+        existingData = JSON.parse(config.value);
+      } catch (error) {
+        this.logger.error(`Failed to parse SITE_INFO configuration`, error);
+      }
+    }
+
+    const mergedData = { ...existingData, ...data };
+    const value = JSON.stringify(mergedData);
+    const status = file
+      ? SystemConfigStatus.PENDING
+      : SystemConfigStatus.SUCCESS;
+
+    if (!config) {
+      config = await this.systemConfigRepo.createEntity({
+        key: SYSTEM_CONFIG.SITE_INFO.key,
+        value,
+        description: SYSTEM_CONFIG.SITE_INFO.description,
+        status,
+      });
+    } else {
+      config = await this.systemConfigRepo.updateEntity(config, {
+        value,
+        status,
+      });
+    }
+
+    return this.mapSystemConfigToResponse(config);
   }
 }

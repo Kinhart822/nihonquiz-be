@@ -5,10 +5,13 @@ import {
   httpNotFound,
 } from '@shared/exceptions/http-exception';
 import { SystemConfigService } from './system-config.service';
+import { getQueueToken } from '@nestjs/bullmq';
+import { FILE_UPLOAD_QUEUE } from '@constants/queue.constant';
 
 describe('SystemConfigService', () => {
   let service: SystemConfigService;
   let repository: jest.Mocked<SystemConfigRepository>;
+  let queue: any;
 
   beforeEach(async () => {
     const mockQueryBuilder = {
@@ -22,6 +25,14 @@ describe('SystemConfigService', () => {
       create: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
+      findOne: jest.fn(),
+      createEntity: jest.fn(),
+      updateEntity: jest.fn(),
+      deleteEntitiesByCondition: jest.fn(),
+    };
+
+    const mockQueue = {
+      add: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -31,11 +42,16 @@ describe('SystemConfigService', () => {
           provide: SystemConfigRepository,
           useValue: mockRepository,
         },
+        {
+          provide: getQueueToken(FILE_UPLOAD_QUEUE),
+          useValue: mockQueue,
+        },
       ],
     }).compile();
 
     service = module.get<SystemConfigService>(SystemConfigService);
     repository = module.get(SystemConfigRepository);
+    queue = module.get(getQueueToken(FILE_UPLOAD_QUEUE));
   });
 
   afterEach(() => {
@@ -43,6 +59,12 @@ describe('SystemConfigService', () => {
   });
 
   it('should be defined', () => {
+    /*
+     * Flow: should be defined
+     * 1. Setup mock data and dependencies.
+     * 2. Execute the method under test.
+     * 3. Verify the expected results and behavior.
+     */
     expect(service).toBeDefined();
   });
 
@@ -132,15 +154,13 @@ describe('SystemConfigService', () => {
         null,
       );
       const newConfig = { key: 'NEW_KEY', value: 'NEW_VAL' };
-      repository.create.mockReturnValue(newConfig as any);
-      repository.save.mockResolvedValue(newConfig as any);
+      repository.createEntity.mockResolvedValue(newConfig as any);
 
       const result = await service.createSystemConfig('NEW_KEY', 'NEW_VAL');
-      expect(repository.create).toHaveBeenCalledWith({
+      expect(repository.createEntity).toHaveBeenCalledWith({
         key: 'NEW_KEY',
         value: 'NEW_VAL',
       });
-      expect(repository.save).toHaveBeenCalledWith(newConfig);
       expect(result).toEqual(newConfig);
     });
   });
@@ -172,13 +192,16 @@ describe('SystemConfigService', () => {
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,
       );
-      repository.save.mockImplementation(async (c) => c as any);
+      repository.updateEntity.mockResolvedValue({
+        ...mockConfig,
+        value: 'NEW_VAL',
+      } as any);
 
       const result = await service.updateSystemConfig('KEY', 'NEW_VAL');
       expect(result.value).toBe('NEW_VAL');
-      expect(repository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'NEW_VAL' }),
-      );
+      expect(repository.updateEntity).toHaveBeenCalledWith(mockConfig, {
+        value: 'NEW_VAL',
+      });
     });
   });
 
@@ -208,10 +231,14 @@ describe('SystemConfigService', () => {
       (repository.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(
         mockConfig as any,
       );
-      repository.delete.mockResolvedValue({ affected: 1 } as any);
+      repository.deleteEntitiesByCondition.mockResolvedValue({
+        affected: 1,
+      } as any);
 
       const result = await service.deleteSystemConfig('KEY');
-      expect(repository.delete).toHaveBeenCalledWith({ key: 'KEY' });
+      expect(repository.deleteEntitiesByCondition).toHaveBeenCalledWith({
+        key: 'KEY',
+      });
       expect(result).toEqual({ affected: 1 });
     });
   });

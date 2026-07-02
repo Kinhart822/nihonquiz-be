@@ -467,6 +467,10 @@ export const httpErrors = {
     message: 'Submission not found.',
     code: 'SUBMISSION_NOT_FOUND',
   },
+  ATTACHMENT_NOT_FOUND: {
+    message: 'Attachment not found.',
+    code: 'ATTACHMENT_NOT_FOUND',
+  },
   INVALID_DUE_DATE: {
     message: 'Due date must be in the future.',
     code: 'INVALID_DUE_DATE',
@@ -475,10 +479,24 @@ export const httpErrors = {
     message: 'Assignment deadline has passed.',
     code: 'DEADLINE_PASSED',
   },
+  ASSIGNMENT_CLOSED: {
+    message: 'This assignment is closed.',
+    code: 'ASSIGNMENT_CLOSED',
+  },
+  RESUBMIT_NOT_ALLOWED: {
+    message: 'Assignment does not allow resubmission.',
+    code: 'RESUBMIT_NOT_ALLOWED',
+  },
 
   // Question
   MISSING_TEST_OR_QUIZ_ID: {
     message: 'Must provide either practiceTestId or miniQuizId.',
     code: 'MISSING_TEST_OR_QUIZ_ID',
+  },
+
+  // System Config
+  MAINTENANCE_MODE: {
+    message: 'System is under maintenance. Please try again later.',
+    code: 'MAINTENANCE_MODE',
   },
 };

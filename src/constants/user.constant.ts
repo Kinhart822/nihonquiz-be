@@ -115,11 +115,6 @@ export const VERIFY_ACCOUNT_RES = (type: IMailType) => {
   }
 };
 
-export const SYSTEM_CONFIG_KEYS = {
-  MAX_NON_FRIEND_MESSAGES: 'MAX_NON_FRIEND_MESSAGES',
-  MAX_FRIEND_REQUESTS_PER_DAY: 'MAX_FRIEND_REQUESTS_PER_DAY',
-};
-
 export enum AccountHistoryType {
   REGISTER = 'REGISTER',
   SIGN_IN = 'SIGN_IN',

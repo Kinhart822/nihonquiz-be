@@ -15,6 +15,8 @@ import { AssignmentSubmissionAttachmentRepository } from '@repositories/assignme
 import { Job } from 'bullmq';
 import { SocketEmitterService } from '../../modules/socket/socket-emitter.service';
 import { AssignmentAttachmentStatus } from '@constants/user.constant';
+import { SystemConfigRepository } from '@repositories/system-config.repository';
+import { SystemConfigStatus } from '@constants/system-config.constant';
 
 @Processor(FILE_UPLOAD_QUEUE)
 export class FileUploadProcessor extends WorkerHost {
@@ -29,6 +31,7 @@ export class FileUploadProcessor extends WorkerHost {
     private readonly socketEmitterService: SocketEmitterService,
     private readonly assignmentAttachmentRepo: AssignmentAttachmentRepository,
     private readonly submissionAttachmentRepo: AssignmentSubmissionAttachmentRepository,
+    private readonly systemConfigRepo: SystemConfigRepository,
   ) {
     super();
   }
@@ -47,6 +50,8 @@ export class FileUploadProcessor extends WorkerHost {
         return this.handleUploadAssignmentAttachment(job);
       case FILE_UPLOAD_JOB.UPLOAD_SUBMISSION_ATTACHMENT:
         return this.handleUploadSubmissionAttachment(job);
+      case FILE_UPLOAD_JOB.UPLOAD_SITE_LOGO:
+        return this.handleUploadSiteLogo(job);
       default:
         this.logger.warn(`Unknown job name: ${job.name}`);
     }
@@ -299,6 +304,58 @@ export class FileUploadProcessor extends WorkerHost {
       await this.submissionAttachmentRepo.update(attachmentId, {
         status: AssignmentAttachmentStatus.FAILED,
       });
+      throw error;
+    }
+  }
+
+  // ==================== HANDLE UPLOAD SITE LOGO ====================
+  private async handleUploadSiteLogo(job: Job<any>) {
+    const { file } = job.data;
+    const buffer = Buffer.from(file.buffer.data);
+    const multerFile: Express.Multer.File = {
+      ...file,
+      buffer,
+    } as any;
+
+    const config = await this.systemConfigRepo.findOne({
+      where: { key: 'SITE_INFO' },
+    });
+
+    try {
+      const res = await this.cloudinaryService.uploadFile(multerFile);
+      const logoUrl = (res as any).secure_url;
+
+      if (config) {
+        let data: Record<string, any> = {};
+        try {
+          data = JSON.parse(config.value);
+        } catch (error) {
+          this.logger.error(`Failed to parse SITE_INFO configuration`, error);
+        }
+        data['logoUrl'] = logoUrl;
+        await this.systemConfigRepo.updateEntity(config, {
+          value: JSON.stringify(data),
+          status: SystemConfigStatus.SUCCESS,
+        });
+      } else {
+        await this.systemConfigRepo.createEntity({
+          key: 'SITE_INFO',
+          value: JSON.stringify({ logoUrl }),
+          description: 'Site info configuration',
+          status: SystemConfigStatus.SUCCESS,
+        });
+      }
+
+      this.logger.log(`Site logo uploaded successfully`);
+    } catch (error: any) {
+      this.logger.error(`Failed to upload site logo`, error);
+
+      if (config) {
+        await this.systemConfigRepo.updateEntity(config, {
+          status: SystemConfigStatus.FAILED,
+        });
+      }
+
       throw error;
     }
   }

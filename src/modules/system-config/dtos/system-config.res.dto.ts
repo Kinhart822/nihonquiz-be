@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
+import { SystemConfigStatus } from '@constants/system-config.constant';
 
 export class SystemConfigResDto {
   @ApiProperty()
@@ -13,6 +14,10 @@ export class SystemConfigResDto {
   @ApiProperty()
   @Expose()
   value!: any;
+
+  @ApiProperty({ enum: SystemConfigStatus })
+  @Expose()
+  status!: SystemConfigStatus;
 
   @ApiProperty()
   @Expose()
